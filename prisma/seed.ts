@@ -48,15 +48,15 @@ const playerData: Prisma.PlayerCreateInput[] = [
   { name: "Tim Maass" },
   { name: "Jose Aguimatang" },
   { name: "Sara Brannman" },
-  { name: "Jonathan Hinson" }
+  { name: "Jonathan Hinson" },
 ];
 
 export async function main() {
-    await prisma.season.create({ data: seasonData });
+  await prisma.season.create({ data: seasonData });
 
-    for (const player of playerData) {
-        await prisma.player.create({ data: player });
-    }
-};
+  for (const player of playerData) {
+    await prisma.player.create({ data: player });
+  }
+}
 
 main();

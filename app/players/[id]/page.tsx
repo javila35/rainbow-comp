@@ -10,17 +10,17 @@ export default async function Player({
   const player = await prisma.player.findUnique({
     where: { id: parseInt(id) },
     include: {
-        seasons: {
-            include: {
-                season: {
-                    select: {
-                        name: true,
-                        id: true
-                    }
-                }
-            }
-        }
-    }
+      seasons: {
+        include: {
+          season: {
+            select: {
+              name: true,
+              id: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!player) {
