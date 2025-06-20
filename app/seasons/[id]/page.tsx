@@ -115,10 +115,24 @@ export default async function Season({
     try {
       const seasonId = parseInt(id);
 
+      // Check if a player with this name already exists
+      const existingPlayer = await prisma.player.findFirst({
+        where: {
+          name: {
+            equals: playerName.trim(),
+            mode: 'insensitive', // Case-insensitive comparison
+          },
+        },
+      });
+
+      if (existingPlayer) {
+        throw new Error(`A player with the name "${playerName.trim()}" already exists`);
+      }
+
       // Create the new player
       const newPlayer = await prisma.player.create({
         data: {
-          name: playerName,
+          name: playerName.trim(),
         },
       });
 
@@ -138,7 +152,7 @@ export default async function Season({
       return newPlayer.id; // Return the new player's ID
     } catch (error) {
       console.error("Failed to create and add player:", error);
-      throw new Error("Failed to create player");
+      throw new Error(error instanceof Error ? error.message : "Failed to create player");
     }
   }
 

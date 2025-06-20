@@ -16,13 +16,13 @@ datasource db {
 
 model Season {
   id       Int       @id @default(autoincrement())
-  name     String
+  name     String    @unique
   players SeasonRanking[]
 }
 
 model Player {
   id       Int       @id @default(autoincrement())
-  name     String
+  name     String    @unique
   seasons SeasonRanking[]
 }
 
