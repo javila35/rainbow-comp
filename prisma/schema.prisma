@@ -1,0 +1,40 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Season {
+  id       Int       @id @default(autoincrement())
+  name     String
+  players SeasonRanking[]
+}
+
+model Player {
+  id       Int       @id @default(autoincrement())
+  name     String
+  seasons SeasonRanking[]
+}
+
+model SeasonRanking {
+  id       Int    @id @default(autoincrement())
+  season   Season @relation(fields: [seasonId], references: [id])
+  seasonId Int
+  player   Player @relation(fields: [playerId], references: [id])
+  playerId Int
+
+  // Add any other fields relevant to a ranking, e.g.:
+  rank Int
+
+  @@unique([seasonId, playerId]) // Ensures one ranking per player per season
+}
