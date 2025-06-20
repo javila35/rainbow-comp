@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import RankingInput, { type RankingInputRef } from "./RankingInput";
 import DeletePlayerButton from "./DeletePlayerButton";
 import isOddNumber from "@/lib/utils/isOddNumber";
@@ -45,18 +46,13 @@ export default function SortablePlayerTable({
     // Check for localStorage focus on mount (survives revalidation)
     const storedFocusId = localStorage.getItem("focusPlayerId");
     if (storedFocusId && !focusPlayerId) {
-      console.log("Found stored focus ID:", storedFocusId);
       // Try to focus this player
       const playerId = parseInt(storedFocusId);
       const attemptFocus = (attempt: number) => {
-        console.log(`Stored focus attempt ${attempt} for player:`, playerId);
-
         if (rankingInputRefs.current[playerId]) {
-          console.log("Ref found for stored focus, focusing...");
           rankingInputRefs.current[playerId]?.focus();
           localStorage.removeItem("focusPlayerId"); // Clean up
         } else {
-          console.log("Ref not found for stored focus, will retry...");
           if (attempt < 10) {
             setTimeout(() => attemptFocus(attempt + 1), attempt * 100);
           } else {
@@ -70,23 +66,12 @@ export default function SortablePlayerTable({
   }, [players]); // Run when players change (after revalidation)
 
   useEffect(() => {
-    console.log("Focus effect triggered with focusPlayerId:", focusPlayerId);
-    console.log("Available refs:", Object.keys(rankingInputRefs.current));
-    console.log(
-      "Players:",
-      players.map((p) => p.player.id),
-    );
-
     if (focusPlayerId) {
       // Try multiple times with increasing delays to handle the revalidation timing
       const attemptFocus = (attempt: number) => {
-        console.log(`Focus attempt ${attempt} for player:`, focusPlayerId);
-
         if (rankingInputRefs.current[focusPlayerId]) {
-          console.log("Ref found, focusing...");
           rankingInputRefs.current[focusPlayerId]?.focus();
         } else {
-          console.log("Ref not found, will retry...");
           if (attempt < 5) {
             setTimeout(() => attemptFocus(attempt + 1), attempt * 200);
           }
@@ -171,7 +156,11 @@ export default function SortablePlayerTable({
                 isOddNumber(index) ? "bg-gray-300" : ""
               } border-2 px-2`}
             >
-              {player.player.name}
+              <Link 
+                href={`/players/${player.player.id}`}
+              >
+                {player.player.name}
+              </Link>
             </td>
             <td
               className={`${
@@ -182,7 +171,6 @@ export default function SortablePlayerTable({
               <RankingInput
                 ref={(ref) => {
                   if (ref) {
-                    console.log("Setting ref for player:", player.player.id);
                     rankingInputRefs.current[player.player.id] = ref;
                   }
                 }}

@@ -43,7 +43,6 @@ export default function SeasonPlayerManager({
 }: SeasonPlayerManagerProps) {
   const [focusPlayerId, setFocusPlayerId] = useState<number | null>(null);
   const handlePlayerAdded = (playerId: number) => {
-    console.log("Player added, setting focus to:", playerId);
     setFocusPlayerId(playerId);
 
     // Set a more persistent focus mechanism using localStorage
@@ -51,7 +50,6 @@ export default function SeasonPlayerManager({
 
     // Clear focus after a longer delay to allow for revalidation and re-render
     setTimeout(() => {
-      console.log("Clearing focus");
       setFocusPlayerId(null);
       localStorage.removeItem("focusPlayerId");
     }, 3000);

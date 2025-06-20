@@ -25,14 +25,9 @@ const RankingInput = forwardRef<RankingInputRef, RankingInputProps>(
     const inputRef = useRef<HTMLInputElement>(null);
     useImperativeHandle(ref, () => ({
       focus: () => {
-        console.log("RankingInput focus method called for player:", playerId);
-        console.log("Input ref current:", inputRef.current);
         if (inputRef.current) {
           inputRef.current.focus();
           inputRef.current.select();
-          console.log("Focus and select called successfully");
-        } else {
-          console.log("Input ref is null");
         }
       },
     }));
@@ -72,9 +67,6 @@ const RankingInput = forwardRef<RankingInputRef, RankingInputProps>(
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Enter") {
-        console.log(
-          "Enter pressed in RankingInput, setting focus back to PlayerSearch",
-        );
         localStorage.setItem("focusPlayerSearch", "true");
       }
     };
