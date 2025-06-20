@@ -1,9 +1,6 @@
 import prisma from "@/lib/prisma";
-import isOddNumber from "@/lib/utils/isOddNumber";
 import { notFound } from "next/navigation";
-import RankingInput from "@/app/components/RankingInput";
-import PlayerSearch from "@/app/components/PlayerSearch";
-import DeletePlayerButton from "@/app/components/DeletePlayerButton";
+import SeasonPlayerManager from "@/app/components/SeasonPlayerManager";
 
 export default async function Season({
   params,
@@ -47,7 +44,7 @@ export default async function Season({
   async function updatePlayerRanking(
     playerId: number,
     seasonId: number,
-    rank: number
+    rank: number,
   ) {
     "use server";
 
@@ -133,6 +130,8 @@ export default async function Season({
       // Refresh the page data
       const { revalidatePath } = await import("next/cache");
       revalidatePath(`/seasons/${id}`);
+
+      return newPlayer.id; // Return the new player's ID
     } catch (error) {
       console.error("Failed to create and add player:", error);
       throw new Error("Failed to create player");
@@ -165,64 +164,19 @@ export default async function Season({
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center -mt-16">
       <h1 className="text-4xl font-bold mb-8 text-[#333333]">{season.name}</h1>
-      {/* Add Player Search */}
-      <div className="mb-8 w-full max-w-md">
-        {" "}
-        <PlayerSearch
-          seasonId={parseInt(id)}
-          onPlayerAdd={addPlayerToSeason}
-          onPlayerCreate={createPlayerAndAddToSeason}
-          availablePlayers={availablePlayers}
-        />
-      </div>
-      <h3 className="text-2xl font-bold mb-4 text-[#333333]">
-        Current Players
-      </h3>{" "}
-      <table className="table-fixed w-3/4 border-2 border-collapse">
-        <thead>
-          <tr>
-            <th className="bg-gray-300 border-2 w-1/2">Player Name</th>
-            <th className="bg-gray-300 border-2 w-1/3">Rank</th>
-            <th className="bg-gray-300 border-2 w-1/6"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {season.players.map((player, index) => (
-            <tr key={player.id}>
-              <td
-                className={`${
-                  isOddNumber(index) ? "bg-gray-300" : ""
-                } border-2 px-2`}
-              >
-                {player.player.name}
-              </td>
-              <td
-                className={`${
-                  isOddNumber(index) ? "bg-gray-300" : ""
-                } border-2 p-2`}
-              >
-                <RankingInput
-                  playerId={player.player.id}
-                  seasonId={parseInt(id)}
-                  initialRank={player.rank}
-                  onRankUpdate={updatePlayerRanking}
-                />
-              </td>
-              <td
-                className={`${
-                  isOddNumber(index) ? "bg-gray-300" : ""
-                } border-2 p-2 text-center`}
-              >
-                <DeletePlayerButton
-                  playerName={player.player.name}
-                  playerId={player.player.id}
-                  onRemove={removePlayerFromSeason}
-                />
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+
+      <SeasonPlayerManager
+        seasonId={parseInt(id)}
+        players={season.players.map((player) => ({
+          ...player,
+          rank: player.rank?.toNumber() ?? null,
+        }))}
+        availablePlayers={availablePlayers}
+        onPlayerAdd={addPlayerToSeason}
+        onPlayerCreate={createPlayerAndAddToSeason}
+        onRankUpdate={updatePlayerRanking}
+        onRemove={removePlayerFromSeason}
+      />
     </div>
   );
 }

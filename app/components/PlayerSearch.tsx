@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface Player {
   id: number;
@@ -10,13 +10,15 @@ interface Player {
 interface PlayerSearchProps {
   seasonId: number;
   onPlayerAdd: (playerId: number) => Promise<void>;
-  onPlayerCreate: (playerName: string) => Promise<void>;
+  onPlayerCreate: (playerName: string) => Promise<number>; // Now returns the new player's ID
+  onPlayerAdded?: (playerId: number) => void; // New callback for when a player is successfully added
   availablePlayers: Player[];
 }
 
 export default function PlayerSearch({
   onPlayerAdd,
   onPlayerCreate,
+  onPlayerAdded,
   availablePlayers,
 }: PlayerSearchProps) {
   const [searchTerm, setSearchTerm] = useState("");
@@ -24,6 +26,38 @@ export default function PlayerSearch({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  // Check for focus request from RankingInput
+  useEffect(() => {
+    const checkForFocusRequest = () => {
+      const shouldFocus = localStorage.getItem("focusPlayerSearch");
+      if (shouldFocus === "true") {
+        console.log("Focus request detected, focusing PlayerSearch");
+        inputRef.current?.focus();
+        localStorage.removeItem("focusPlayerSearch");
+      }
+    };
+
+    // Check immediately on mount
+    checkForFocusRequest();
+
+    // Set up an interval to check periodically (every 100ms)
+    const interval = setInterval(checkForFocusRequest, 100);
+
+    // Also check when window gains focus
+    const handleWindowFocus = () => {
+      checkForFocusRequest();
+    };
+
+    window.addEventListener("focus", handleWindowFocus);
+
+    // Cleanup
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, []); // Run only on mount
+
   useEffect(() => {
     if (searchTerm.trim() === "") {
       setFilteredPlayers([]);
@@ -33,7 +67,7 @@ export default function PlayerSearch({
     }
 
     const filtered = availablePlayers.filter((player) =>
-      player.name.toLowerCase().includes(searchTerm.toLowerCase())
+      player.name.toLowerCase().includes(searchTerm.toLowerCase()),
     );
     setFilteredPlayers(filtered);
     setShowSuggestions(true);
@@ -46,22 +80,23 @@ export default function PlayerSearch({
       setSearchTerm("");
       setShowSuggestions(false);
       setSelectedIndex(-1);
+      onPlayerAdded?.(player.id); // Call the callback with the player ID
     } catch (error) {
       console.error("Failed to add player:", error);
     } finally {
       setIsLoading(false);
     }
   };
-
   const handleCreatePlayer = async () => {
     if (!searchTerm.trim()) return;
 
     setIsLoading(true);
     try {
-      await onPlayerCreate(searchTerm.trim());
+      const newPlayerId = await onPlayerCreate(searchTerm.trim());
       setSearchTerm("");
       setShowSuggestions(false);
       setSelectedIndex(-1);
+      onPlayerAdded?.(newPlayerId); // Call the callback with the new player ID
     } catch (error) {
       console.error("Failed to create player:", error);
     } finally {
@@ -124,6 +159,7 @@ export default function PlayerSearch({
     <div className="relative w-full max-w-md">
       {" "}
       <input
+        ref={inputRef}
         type="text"
         placeholder="Search players to add to season..."
         value={searchTerm}
@@ -167,7 +203,7 @@ export default function PlayerSearch({
             >
               <span className="text-green-600 font-medium">
                 + Create new player:
-              </span>{" "}
+              </span>
               "{searchTerm}"
             </button>
           </div>
