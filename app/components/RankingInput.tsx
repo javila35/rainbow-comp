@@ -6,16 +6,20 @@ interface RankingInputProps {
   playerId: number;
   seasonId: number;
   initialRank?: number | null;
-  onRankUpdate: (playerId: number, seasonId: number, rank: number) => Promise<void>;
+  onRankUpdate: (
+    playerId: number,
+    seasonId: number,
+    rank: number
+  ) => Promise<void>;
 }
 
-export default function RankingInput({ 
-  playerId, 
-  seasonId, 
-  initialRank, 
-  onRankUpdate 
+export default function RankingInput({
+  playerId,
+  seasonId,
+  initialRank,
+  onRankUpdate,
 }: RankingInputProps) {
-  const [rank, setRank] = useState(initialRank?.toString());
+  const [rank, setRank] = useState(initialRank?.toString() || "");
   const [error, setError] = useState<string>("");
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,9 +30,7 @@ export default function RankingInput({
     // Clear existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
-    }
-
-    // Set new timeout for 3 seconds
+    } // Set new timeout for 3 seconds
     timeoutRef.current = setTimeout(async () => {
       if (newValue && !isNaN(Number(newValue))) {
         const numValue = Number(newValue);
@@ -36,6 +38,14 @@ export default function RankingInput({
           setError("Rank must be between 1 and 10");
           return;
         }
+
+        // Check for maximum 2 decimal places
+        const decimalPlaces = (numValue.toString().split(".")[1] || "").length;
+        if (decimalPlaces > 2) {
+          setError("Rank can have at most 2 decimal places");
+          return;
+        }
+
         try {
           await onRankUpdate(playerId, seasonId, numValue);
         } catch (error) {
@@ -47,14 +57,18 @@ export default function RankingInput({
 
   return (
     <div className="w-full">
+      {" "}
       <input
-        placeholder="Enter ranking (1-10)"
+        placeholder="Enter ranking"
         type="number"
         min="1"
         max="10"
+        step="0.01"
         value={rank}
         onChange={handleChange}
-        className={`w-full px-2 py-1 border rounded ${error ? 'border-red-500' : 'border-gray-300'}`}
+        className={`w-full px-2 py-1 ${
+          error ? "border-red-500" : "border-gray-300"
+        }`}
       />
       {error && <div className="text-red-500 text-xs mt-1">{error}</div>}
     </div>
