@@ -34,7 +34,7 @@ model SeasonRanking {
   playerId Int
 
   // Add any other fields relevant to a ranking, e.g.:
-  rank Int
+  rank Int? 
 
   @@unique([seasonId, playerId]) // Ensures one ranking per player per season
 }
