@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import SeasonPlayerManager from "@/app/components/SeasonPlayerManager";
+import { Decimal } from "@prisma/client/runtime/library";
 
 export default async function Season({
   params,
@@ -60,9 +61,12 @@ export default async function Season({
     }
 
     try {
+      // Use Decimal to avoid floating-point precision issues
+      const decimalRank = new Decimal(rank.toString());
+      
       await prisma.seasonRanking.update({
         where: { seasonId_playerId: { seasonId, playerId } },
-        data: { rank },
+        data: { rank: decimalRank },
       });
     } catch (error) {
       console.error("Failed to update player ranking:", error);
@@ -169,7 +173,7 @@ export default async function Season({
         seasonId={parseInt(id)}
         players={season.players.map((player) => ({
           ...player,
-          rank: player.rank?.toNumber() ?? null,
+          rank: player.rank ? parseFloat(player.rank.toString()) : null,
         }))}
         availablePlayers={availablePlayers}
         onPlayerAdd={addPlayerToSeason}
