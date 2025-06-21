@@ -30,7 +30,7 @@ export default async function Player({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center -mt-16">
+    <div className="min-h-screen flex flex-col items-center justify-center -mt-16">
       <h1 className="text-4xl font-bold mb-8 text-[#333333]">{player.name}</h1>
       <h3 className="text-2xl font-bold mb-4 text-[#333333]">Seasons</h3>
       
