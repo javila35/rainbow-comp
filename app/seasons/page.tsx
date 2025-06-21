@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 export default async function Seasons() {
   const seasons = await prisma.season.findMany();
 
-  // Sort seasons by year (descending) then by season name
+  // Sort seasons chronologically (most recent first)
   const sortedSeasons = seasons.sort((a, b) => {
     // Extract year and season from the format "[SEASON] [YEAR]"
     const parseSeasonName = (name: string) => {
@@ -18,13 +18,27 @@ export default async function Seasons() {
     const seasonA = parseSeasonName(a.name);
     const seasonB = parseSeasonName(b.name);
 
-    // First sort by year (descending)
+    // Define season order (Winter=0, Spring=1, Summer=2, Fall=3)
+    const getSeasonOrder = (season: string) => {
+      const seasonLower = season.toLowerCase();
+      if (seasonLower.includes('winter')) return 0;
+      if (seasonLower.includes('spring')) return 1;
+      if (seasonLower.includes('summer')) return 2;
+      if (seasonLower.includes('fall') || seasonLower.includes('autumn')) return 3;
+      return 4; // For any other season names
+    };
+
+    // First sort by year (descending - most recent first)
     if (seasonA.year !== seasonB.year) {
       return seasonB.year - seasonA.year;
     }
 
-    // Then sort by season name (alphabetically)
-    return seasonA.season.localeCompare(seasonB.season);
+    // Then sort by season order (Fall, Summer, Spring, Winter for same year)
+    // For descending chronological order: Fall > Summer > Spring > Winter
+    const orderA = getSeasonOrder(seasonA.season);
+    const orderB = getSeasonOrder(seasonB.season);
+    
+    return orderB - orderA; // Descending order
   });
 
   async function createSeason(formData: FormData) {
