@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, forwardRef, useImperativeHandle } from "react";
+import { validateRank } from "@/lib/utils/validation";
 
 interface RankingInputProps {
   playerId: number;
@@ -43,20 +44,9 @@ const RankingInput = forwardRef<RankingInputRef, RankingInputProps>(
       timeoutRef.current = setTimeout(async () => {
         if (newValue && !isNaN(Number(newValue))) {
           const numValue = Number(newValue);
-          if (numValue < 1 || numValue > 10) {
-            setError("Rank must be between 1 and 10");
-            return;
-          }
-
-          // Check for maximum 2 decimal places
-          const decimalPlaces = (numValue.toString().split(".")[1] || "")
-            .length;
-          if (decimalPlaces > 2) {
-            setError("Rank can have at most 2 decimal places");
-            return;
-          }
-
+          
           try {
+            validateRank(numValue);
             await onRankUpdate(playerId, seasonId, numValue);
           } catch (error) {
             setError("Failed to update rank");

@@ -2,6 +2,8 @@ import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import isOddNumber from "@/lib/utils/isOddNumber";
+import { sortSeasonsChronologically } from "@/lib/utils/seasonSorting";
+import { GLASSY_CONTAINER_CLASSES } from "@/lib/utils/styles";
 
 export default async function Player({
   params,
@@ -30,39 +32,10 @@ export default async function Player({
   }
 
   // Sort seasons chronologically (most recent first)
-  const sortedSeasons = player.seasons.sort((a, b) => {
-    const parseSeasonName = (name: string) => {
-      const parts = name.trim().split(' ');
-      const year = parseInt(parts[parts.length - 1]) || 0;
-      const season = parts.slice(0, -1).join(' ');
-      return { year, season };
-    };
-
-    const seasonA = parseSeasonName(a.season.name);
-    const seasonB = parseSeasonName(b.season.name);
-
-    // Define season order (Winter=0, Spring=1, Summer=2, Fall=3)
-    const getSeasonOrder = (season: string) => {
-      const seasonLower = season.toLowerCase();
-      if (seasonLower.includes('winter')) return 0;
-      if (seasonLower.includes('spring')) return 1;
-      if (seasonLower.includes('summer')) return 2;
-      if (seasonLower.includes('fall') || seasonLower.includes('autumn')) return 3;
-      return 4; // For any other season names
-    };
-
-    // First sort by year (descending - most recent first)
-    if (seasonA.year !== seasonB.year) {
-      return seasonB.year - seasonA.year;
-    }
-
-    // Then sort by season order (Fall, Summer, Spring, Winter for same year)
-    // For descending chronological order: Fall > Summer > Spring > Winter
-    const orderA = getSeasonOrder(seasonA.season);
-    const orderB = getSeasonOrder(seasonB.season);
-    
-    return orderB - orderA; // Descending order
-  });
+  const sortedSeasons = sortSeasonsChronologically(
+    player.seasons, 
+    (seasonRanking) => seasonRanking.season.name
+  );
 
   // Prepare data for ranking visualization
   const rankingData = sortedSeasons.map((season, index) => ({
@@ -82,7 +55,7 @@ export default async function Player({
           {/* Ranking Over Time Visualization */}
           <div className="mb-8 w-full max-w-4xl px-4">
             <h3 className="text-2xl font-bold mb-4 text-[#333333] text-center">Ranking Over Time</h3>
-            <div className="bg-white/40 backdrop-blur-md border-2 border-white/50 rounded-lg p-6 shadow-lg">
+            <div className={GLASSY_CONTAINER_CLASSES}>
               <div className="space-y-4">
                 {rankingData.map((data, index) => (
                   <div key={index} className="flex items-center">

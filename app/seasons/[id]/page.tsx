@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import SeasonPlayerManager from "@/app/components/SeasonPlayerManager";
 import { Decimal } from "@prisma/client/runtime/library";
+import { validateRank, validateUniqueName } from "@/lib/utils/validation";
 
 export default async function Season({
   params,
@@ -49,16 +50,7 @@ export default async function Season({
   ) {
     "use server";
 
-    // Validate that rank is between 1 and 10
-    if (rank < 1 || rank > 10) {
-      throw new Error("Rank must be between 1 and 10");
-    }
-
-    // Validate that rank has at most 2 decimal places
-    const decimalPlaces = (rank.toString().split(".")[1] || "").length;
-    if (decimalPlaces > 2) {
-      throw new Error("Rank can have at most 2 decimal places");
-    }
+    validateRank(rank);
 
     try {
       // Use Decimal to avoid floating-point precision issues
@@ -116,18 +108,7 @@ export default async function Season({
       const seasonId = parseInt(id);
 
       // Check if a player with this name already exists
-      const existingPlayer = await prisma.player.findFirst({
-        where: {
-          name: {
-            equals: playerName.trim(),
-            mode: 'insensitive', // Case-insensitive comparison
-          },
-        },
-      });
-
-      if (existingPlayer) {
-        throw new Error(`A player with the name "${playerName.trim()}" already exists`);
-      }
+      await validateUniqueName(prisma, playerName, 'player');
 
       // Create the new player
       const newPlayer = await prisma.player.create({

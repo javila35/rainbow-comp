@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import Link from "next/link";
+import { CARD_CLASSES, CARD_LINK_CLASSES } from "@/lib/utils/styles";
 
 export default async function Players() {
   const players = await prisma.player.findMany();
@@ -21,10 +22,10 @@ export default async function Players() {
         <div className="w-full max-w-6xl px-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {sortedPlayers.map((player) => (
-              <div key={player.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow">
+              <div key={player.id} className={CARD_CLASSES}>
                 <Link
                   href={`/players/${player.id}`}
-                  className="text-[#333333] hover:text-blue-600 transition-colors font-medium block"
+                  className={CARD_LINK_CLASSES}
                 >
                   {player.name}
                 </Link>
