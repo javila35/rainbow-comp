@@ -10,7 +10,7 @@ export default async function Players() {
   );
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center -mt-16">
+    <div className="min-h-screen flex flex-col items-center pt-8">
       <h1 className="text-4xl font-bold mb-8 font-[family-name:var(--font-geist-sans)] text-[#333333]">
         Players
       </h1>
