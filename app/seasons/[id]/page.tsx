@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import SeasonPlayerManager from "@/app/components/SeasonPlayerManager";
+import SeasonStatistics from "@/app/components/SeasonStatistics";
 import { Decimal } from "@prisma/client/runtime/library";
 import { validateRank, validateUniqueName } from "@/lib/utils/validation";
 
@@ -20,7 +21,11 @@ export default async function Season({
           id: true,
           rank: true,
           player: {
-            select: { name: true, id: true },
+            select: { 
+              name: true, 
+              id: true,
+              gender: true 
+            },
           },
         },
       },
@@ -164,6 +169,18 @@ export default async function Season({
     <div className="min-h-screen flex flex-col items-center pt-8">
       <h1 className="text-4xl font-bold mb-8 text-[#333333]">{season.name}</h1>
 
+      {/* Season Statistics */}
+      <div className="mb-8">
+        <SeasonStatistics 
+          players={season.players.map((player) => ({
+            ...player,
+            rank: player.rank ? parseFloat(player.rank.toString()) : null,
+          }))}
+          seasonName={season.name}
+        />
+      </div>
+
+      {/* Season Player Manager */}
       <SeasonPlayerManager
         seasonId={parseInt(id)}
         players={season.players.map((player) => ({
