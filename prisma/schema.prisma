@@ -40,8 +40,20 @@ model SeasonRanking {
   player   Player @relation(fields: [playerId], references: [id])
   playerId Int
 
-  // Add any other fields relevant to a ranking, e.g.:
   rank Decimal? 
 
   @@unique([seasonId, playerId]) // Ensures one ranking per player per season
+}
+
+model User {
+  id        String @id @default(cuid())
+  email     String @unique
+  name      String?
+  role      Role    @default(USER)
+}
+
+enum Role {
+  USER
+  ORGANIZER
+  JOE
 }
