@@ -9,7 +9,7 @@ interface Player {
   name: string;
   gender: string | null;
   seasons: {
-    rank: any; // Decimal or null from Prisma
+    rank: number | null; // Converted from Decimal to number
   }[];
 }
 
@@ -48,7 +48,7 @@ function calculatePlayerStatistics(players: Player[]): PlayerStatistics {
     let playerAverage: number | null = null;
     if (rankedSeasons.length > 0) {
       const totalRating = rankedSeasons.reduce(
-        (sum, season) => sum + parseFloat(season.rank.toString()),
+        (sum, season) => sum + (season.rank as number), // We know it's not null due to filter
         0
       );
       playerAverage = totalRating / rankedSeasons.length;
