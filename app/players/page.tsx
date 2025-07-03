@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import PlayerTabs from "@/app/components/PlayerTabs";
 
 export default async function Players() {
-  const players = await prisma.player.findMany({
+  const playersData = await prisma.player.findMany({
     select: {
       id: true,
       name: true,
@@ -14,6 +14,14 @@ export default async function Players() {
       },
     },
   });
+
+  // Convert Decimal ranks to numbers for client component compatibility
+  const players = playersData.map(player => ({
+    ...player,
+    seasons: player.seasons.map(season => ({
+      rank: season.rank ? Number(season.rank) : null,
+    })),
+  }));
 
   return (
     <div className="min-h-screen flex flex-col items-center pt-8">
