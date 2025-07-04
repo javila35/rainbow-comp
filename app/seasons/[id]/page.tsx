@@ -2,6 +2,7 @@ import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import SeasonPlayerManager from "@/app/components/SeasonPlayerManager";
 import SeasonStatistics from "@/app/components/SeasonStatistics";
+import ClientCsvUpload from "@/app/components/ClientCsvUpload";
 import { requireRole } from "@/lib/utils/server-auth";
 import { Decimal } from "@prisma/client/runtime/library";
 import { validateRank, validateUniqueName } from "@/lib/utils/validation";
@@ -172,7 +173,10 @@ export default async function Season({
   }
   return (
     <div className="min-h-screen flex flex-col items-center pt-8">
-      <h1 className="text-4xl font-bold mb-8 text-[#333333]">{season.name}</h1>
+      <div className="flex items-center justify-between w-full max-w-4xl mb-8">
+        <h1 className="text-4xl font-bold text-[#333333]">{season.name}</h1>
+        <ClientCsvUpload seasonId={parseInt(id)} />
+      </div>
 
       {/* Season Statistics */}
       <div className="mb-8">
