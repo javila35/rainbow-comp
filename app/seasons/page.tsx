@@ -4,8 +4,11 @@ import { revalidatePath } from "next/cache";
 import { sortSeasonsChronologically } from "@/lib/utils/seasonSorting";
 import { validateUniqueName } from "@/lib/utils/validation";
 import { GLASSY_INPUT_CLASSES, GLASSY_BUTTON_CLASSES, CARD_CLASSES, CARD_LINK_CLASSES } from "@/lib/utils/styles";
+import { requireRole } from "@/lib/utils/server-auth";
 
 export default async function Seasons() {
+  await requireRole("ORGANIZER");
+
   const seasons = await prisma.season.findMany();
 
   // Sort seasons chronologically (most recent first)

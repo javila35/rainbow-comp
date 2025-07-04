@@ -7,12 +7,14 @@ import { calculatePlayerStats, formatRatingChange, formatAverageChangePerSeason 
 import { GLASSY_CONTAINER_CLASSES } from "@/lib/utils/styles";
 import PlayerGenderEditor from "@/app/components/PlayerGenderEditor";
 import { revalidatePath } from "next/cache";
+import { requireRole } from "@/lib/utils/server-auth";
 
 export default async function Player({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireRole("ORGANIZER");
   const { id } = await params;
   const player = await prisma.player.findUnique({
     where: { id: parseInt(id) },

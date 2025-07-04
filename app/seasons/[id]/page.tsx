@@ -4,12 +4,15 @@ import SeasonPlayerManager from "@/app/components/SeasonPlayerManager";
 import SeasonStatistics from "@/app/components/SeasonStatistics";
 import { Decimal } from "@prisma/client/runtime/library";
 import { validateRank, validateUniqueName } from "@/lib/utils/validation";
+import { requireRole } from "@/lib/utils/server-auth";
 
 export default async function Season({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireRole("ORGANIZER");
+
   const { id } = await params;
 
   // Get season with players
