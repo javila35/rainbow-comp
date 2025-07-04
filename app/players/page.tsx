@@ -1,7 +1,10 @@
 import prisma from "@/lib/prisma";
 import PlayerTabs from "@/app/components/PlayerTabs";
+import { requireRole } from "@/lib/utils/server-auth";
 
 export default async function Players() {
+  await requireRole("ORGANIZER");
+
   const playersData = await prisma.player.findMany({
     select: {
       id: true,

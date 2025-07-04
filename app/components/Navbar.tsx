@@ -5,6 +5,7 @@ import { hasRole } from "@/lib/utils/auth";
 export default async function Navbar() {
   const session = await auth();
   const isAdmin = session?.user && hasRole(session.user.role, "JOE");
+  const canAccessManagement = session?.user && hasRole(session.user.role, "ORGANIZER");
 
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200">
@@ -25,18 +26,22 @@ export default async function Navbar() {
             >
               Home
             </Link>
-            <Link
-              href="/players"
-              className="font-[family-name:var(--font-geist-sans)] text-[#333333] hover:text-gray-600 transition-colors"
-            >
-              Players
-            </Link>
-            <Link
-              href="/seasons"
-              className="font-[family-name:var(--font-geist-sans)] text-[#333333] hover:text-gray-600 transition-colors"
-            >
-              Seasons
-            </Link>
+            {canAccessManagement && (
+              <>
+                <Link
+                  href="/players"
+                  className="font-[family-name:var(--font-geist-sans)] text-[#333333] hover:text-gray-600 transition-colors"
+                >
+                  Players
+                </Link>
+                <Link
+                  href="/seasons"
+                  className="font-[family-name:var(--font-geist-sans)] text-[#333333] hover:text-gray-600 transition-colors"
+                >
+                  Seasons
+                </Link>
+              </>
+            )}
             {isAdmin && (
               <Link
                 href="/admin/users"
