@@ -3,6 +3,7 @@
 import { useState } from "react";
 import PlayerSearch from "./PlayerSearch";
 import SortablePlayerTable from "./SortablePlayerTable";
+import { createFocusManager } from "@/lib/utils/focusUtils";
 
 interface Player {
   id: number;
@@ -27,7 +28,7 @@ interface SeasonPlayerManagerProps {
   onRankUpdate: (
     playerId: number,
     seasonId: number,
-    rank: number,
+    rank: number
   ) => Promise<void>;
   onRemove: (playerId: number) => Promise<void>;
 }
@@ -42,16 +43,18 @@ export default function SeasonPlayerManager({
   onRemove,
 }: SeasonPlayerManagerProps) {
   const [focusPlayerId, setFocusPlayerId] = useState<number | null>(null);
+  const focusManager = createFocusManager();
+
   const handlePlayerAdded = (playerId: number) => {
     setFocusPlayerId(playerId);
 
     // Set a more persistent focus mechanism using localStorage
-    localStorage.setItem("focusPlayerId", playerId.toString());
+    focusManager.setStoredFocus(playerId);
 
     // Clear focus after a longer delay to allow for revalidation and re-render
     setTimeout(() => {
       setFocusPlayerId(null);
-      localStorage.removeItem("focusPlayerId");
+      focusManager.clearStoredFocus();
     }, 3000);
   };
 

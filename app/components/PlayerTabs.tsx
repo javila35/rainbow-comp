@@ -2,95 +2,22 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { CARD_CLASSES, CARD_LINK_CLASSES, GLASSY_CONTAINER_CLASSES, GLASSY_BUTTON_CLASSES } from "@/lib/utils/styles";
-
-interface Player {
-  id: number;
-  name: string;
-  gender: string | null;
-  seasons: {
-    rank: number | null; // Converted from Decimal to number
-  }[];
-}
+import {
+  CARD_CLASSES,
+  CARD_LINK_CLASSES,
+  GLASSY_CONTAINER_CLASSES,
+} from "@/lib/utils/styles";
+import {
+  calculatePlayerStatistics,
+  getGenderLabel,
+  getGenderCounts,
+  filterPlayersByGender,
+  sortPlayersByName,
+  type PlayerWithRatings,
+} from "@/lib/utils/genderUtils";
 
 interface PlayerTabsProps {
-  players: Player[];
-}
-
-interface GenderStats {
-  averageRating: number | null;
-  playerCount: number;
-  percentage: number;
-}
-
-interface PlayerStatistics {
-  male: GenderStats;
-  female: GenderStats;
-  nonBinary: GenderStats;
-  unspecified: GenderStats;
-  totalPlayers: number;
-}
-
-function calculatePlayerStatistics(players: Player[]): PlayerStatistics {
-  const totalPlayers = players.length;
-    // Group players by gender
-  const maleStats = { ratings: [] as number[], count: 0 };
-  const femaleStats = { ratings: [] as number[], count: 0 };
-  const nonBinaryStats = { ratings: [] as number[], count: 0 };
-  const unspecifiedStats = { ratings: [] as number[], count: 0 };
-
-  players.forEach(player => {
-    // Calculate average rating for this player
-    const rankedSeasons = player.seasons.filter(season => 
-      season.rank !== null && season.rank !== undefined
-    );
-    
-    let playerAverage: number | null = null;
-    if (rankedSeasons.length > 0) {
-      const totalRating = rankedSeasons.reduce(
-        (sum, season) => sum + (season.rank as number), // We know it's not null due to filter
-        0
-      );
-      playerAverage = totalRating / rankedSeasons.length;
-    }
-
-    // Categorize by gender
-    switch (player.gender) {
-      case "MALE":
-        maleStats.count++;
-        if (playerAverage !== null) maleStats.ratings.push(playerAverage);
-        break;
-      case "FEMALE":
-        femaleStats.count++;
-        if (playerAverage !== null) femaleStats.ratings.push(playerAverage);
-        break;
-      case "NON_BINARY":
-        nonBinaryStats.count++;
-        if (playerAverage !== null) nonBinaryStats.ratings.push(playerAverage);
-        break;
-      default:
-        unspecifiedStats.count++;
-        if (playerAverage !== null) unspecifiedStats.ratings.push(playerAverage);
-        break;
-    }
-  });
-
-  // Calculate averages and percentages
-  const calculateStats = (stats: { ratings: number[], count: number }): GenderStats => ({
-    averageRating: stats.ratings.length > 0 
-      ? Math.round((stats.ratings.reduce((sum, rating) => sum + rating, 0) / stats.ratings.length) * 100) / 100
-      : null,
-    playerCount: stats.count,
-    percentage: totalPlayers > 0 ? Math.round((stats.count / totalPlayers) * 100 * 100) / 100 : 0,
-  });
-
-  return {
-    male: calculateStats(maleStats),
-    female: calculateStats(femaleStats),
-    nonBinary: calculateStats(nonBinaryStats),
-    unspecified: calculateStats(unspecifiedStats),
-    totalPlayers,
-  };
+  players: PlayerWithRatings[];
 }
 
 type GenderFilter = "all" | "male" | "female" | "non-binary" | "unspecified";
@@ -98,30 +25,35 @@ type GenderFilter = "all" | "male" | "female" | "non-binary" | "unspecified";
 export default function PlayerTabs({ players }: PlayerTabsProps) {
   const [activeTab, setActiveTab] = useState<"list" | "stats">("list");
   const [genderFilter, setGenderFilter] = useState<GenderFilter>("all");
-  const [selectedPlayers, setSelectedPlayers] = useState<Set<number>>(new Set());
+  const [selectedPlayers, setSelectedPlayers] = useState<Set<number>>(
+    new Set()
+  );
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   // Function to update player genders in bulk
-  const bulkUpdateGender = async (playerIds: number[], gender: string | null) => {
+  const bulkUpdateGender = async (
+    playerIds: number[],
+    gender: string | null
+  ) => {
     try {
-      const response = await fetch('/api/players/bulk-update-gender', {
-        method: 'POST',
+      const response = await fetch("/api/players/bulk-update-gender", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ playerIds, gender }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update player genders');
+        throw new Error("Failed to update player genders");
       }
 
       // Refresh the page to show updated data
       window.location.reload();
     } catch (error) {
-      console.error('Error updating player genders:', error);
-      alert('Failed to update player genders. Please try again.');
+      console.error("Error updating player genders:", error);
+      alert("Failed to update player genders. Please try again.");
     }
   };
 
@@ -138,7 +70,7 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
 
   // Select all filtered players
   const selectAllFiltered = () => {
-    const filteredPlayerIds = new Set(filteredPlayers.map(p => p.id));
+    const filteredPlayerIds = new Set(filteredPlayers.map((p) => p.id));
     setSelectedPlayers(filteredPlayerIds);
   };
 
@@ -151,27 +83,16 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
   // Handle bulk gender update
   const handleBulkGenderUpdate = (gender: string | null) => {
     if (selectedPlayers.size === 0) return;
-    
+
     startTransition(() => {
       bulkUpdateGender(Array.from(selectedPlayers), gender);
     });
   };
-  
-  // Filter players by gender
-  const filteredPlayers = players.filter(player => {
-    if (genderFilter === "all") return true;
-    if (genderFilter === "male") return player.gender === "MALE";
-    if (genderFilter === "female") return player.gender === "FEMALE";
-    if (genderFilter === "non-binary") return player.gender === "NON_BINARY";
-    if (genderFilter === "unspecified") return player.gender === null;
-    return true;
-  });
-  
-  // Sort players alphabetically by name for the list view
-  const sortedPlayers = filteredPlayers.sort((a, b) => 
-    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
-  );
 
+  // Filter and sort players using utility functions
+  const filteredPlayers = filterPlayersByGender(players, genderFilter);
+  const sortedPlayers = sortPlayersByName(filteredPlayers);
+  const genderCounts = getGenderCounts(players);
   const statistics = calculatePlayerStatistics(players);
 
   return (
@@ -198,14 +119,19 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
         >
           Statistics
         </button>
-      </div>      {/* Tab Content */}
+      </div>{" "}
+      {/* Tab Content */}
       {activeTab === "list" ? (
         // Player List View
-        <div>          {/* Gender Filter */}
+        <div>
+          {" "}
+          {/* Gender Filter */}
           <div className="mb-6">
             <div className={`${GLASSY_CONTAINER_CLASSES} p-4`}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Filter by Gender</h3>
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Filter by Gender
+                </h3>
                 <div className="flex items-center gap-4">
                   {genderFilter !== "all" && (
                     <span className="text-sm text-gray-600">
@@ -233,7 +159,7 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                       : "bg-white/60 text-gray-700 hover:bg-white/80 border border-gray-300"
                   }`}
                 >
-                  All ({players.length})
+                  All ({genderCounts.all})
                 </button>
                 <button
                   onClick={() => setGenderFilter("male")}
@@ -243,7 +169,7 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                       : "bg-white/60 text-gray-700 hover:bg-white/80 border border-gray-300"
                   }`}
                 >
-                  Male ({players.filter(p => p.gender === "MALE").length})
+                  Male ({genderCounts.male})
                 </button>
                 <button
                   onClick={() => setGenderFilter("female")}
@@ -253,7 +179,7 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                       : "bg-white/60 text-gray-700 hover:bg-white/80 border border-gray-300"
                   }`}
                 >
-                  Female ({players.filter(p => p.gender === "FEMALE").length})
+                  Female ({genderCounts.female})
                 </button>
                 <button
                   onClick={() => setGenderFilter("non-binary")}
@@ -263,7 +189,7 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                       : "bg-white/60 text-gray-700 hover:bg-white/80 border border-gray-300"
                   }`}
                 >
-                  Non-Binary ({players.filter(p => p.gender === "NON_BINARY").length})
+                  Non-Binary ({genderCounts.nonBinary})
                 </button>
                 <button
                   onClick={() => setGenderFilter("unspecified")}
@@ -273,15 +199,16 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                       : "bg-white/60 text-gray-700 hover:bg-white/80 border border-gray-300"
                   }`}
                 >
-                  Unspecified ({players.filter(p => p.gender === null).length})
+                  Unspecified ({genderCounts.unspecified})
                 </button>
               </div>
             </div>
           </div>
-
           {/* Bulk Actions Panel */}
           {isSelectionMode && (
-            <div className={`${GLASSY_CONTAINER_CLASSES} p-4 mb-6 border-l-4 border-blue-500`}>
+            <div
+              className={`${GLASSY_CONTAINER_CLASSES} p-4 mb-6 border-l-4 border-blue-500`}
+            >
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">
                   Bulk Actions ({selectedPlayers.size} selected)
@@ -301,11 +228,12 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                   </button>
                 </div>
               </div>
-              
+
               {selectedPlayers.size > 0 && (
                 <div>
                   <p className="text-sm text-gray-600 mb-3">
-                    Set gender for {selectedPlayers.size} selected player{selectedPlayers.size !== 1 ? 's' : ''}:
+                    Set gender for {selectedPlayers.size} selected player
+                    {selectedPlayers.size !== 1 ? "s" : ""}:
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <button
@@ -341,46 +269,58 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
               )}
             </div>
           )}
-
           {/* Player List */}
           {sortedPlayers.length === 0 ? (
             <p className="text-gray-600 text-center">
-              {players.length === 0 
-                ? "No players created yet." 
-                : `No players found with ${genderFilter === "all" ? "any" : genderFilter} gender.`
-              }
+              {players.length === 0
+                ? "No players created yet."
+                : `No players found with ${
+                    genderFilter === "all" ? "any" : genderFilter
+                  } gender.`}
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {sortedPlayers.map((player) => (
-                <div key={player.id} className={`${CARD_CLASSES} ${isSelectionMode ? 'cursor-pointer' : ''}`}>
+                <div
+                  key={player.id}
+                  className={`${CARD_CLASSES} ${
+                    isSelectionMode ? "cursor-pointer" : ""
+                  }`}
+                >
                   {isSelectionMode ? (
                     <div
                       onClick={() => togglePlayerSelection(player.id)}
                       className={`p-4 rounded-lg transition-all duration-200 ${
                         selectedPlayers.has(player.id)
-                          ? 'bg-blue-100 border-2 border-blue-500'
-                          : 'bg-white/60 border-2 border-transparent hover:bg-white/80'
+                          ? "bg-blue-100 border-2 border-blue-500"
+                          : "bg-white/60 border-2 border-transparent hover:bg-white/80"
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex flex-col">
                           <span className="font-medium">{player.name}</span>
                           <span className="text-xs text-gray-500 mt-1">
-                            {player.gender === "MALE" ? "Male" 
-                             : player.gender === "FEMALE" ? "Female"
-                             : player.gender === "NON_BINARY" ? "Non-Binary"
-                             : "Gender not set"}
+                            {getGenderLabel(player.gender)}
                           </span>
                         </div>
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                          selectedPlayers.has(player.id)
-                            ? 'bg-blue-500 border-blue-500'
-                            : 'border-gray-300'
-                        }`}>
+                        <div
+                          className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                            selectedPlayers.has(player.id)
+                              ? "bg-blue-500 border-blue-500"
+                              : "border-gray-300"
+                          }`}
+                        >
                           {selectedPlayers.has(player.id) && (
-                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            <svg
+                              className="w-3 h-3 text-white"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                clipRule="evenodd"
+                              />
                             </svg>
                           )}
                         </div>
@@ -394,10 +334,7 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                       <div className="flex flex-col">
                         <span className="font-medium">{player.name}</span>
                         <span className="text-xs text-gray-500 mt-1">
-                          {player.gender === "MALE" ? "Male" 
-                           : player.gender === "FEMALE" ? "Female"
-                           : player.gender === "NON_BINARY" ? "Non-Binary"
-                           : "Gender not set"}
+                          {getGenderLabel(player.gender)}
                         </span>
                       </div>
                     </Link>
@@ -418,11 +355,13 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600 mb-2">
-                  {statistics.male.averageRating !== null 
-                    ? statistics.male.averageRating.toFixed(2) 
+                  {statistics.male.averageRating !== null
+                    ? statistics.male.averageRating.toFixed(2)
                     : "N/A"}
                 </div>
-                <div className="text-sm text-gray-700 font-medium">Male Average</div>
+                <div className="text-sm text-gray-700 font-medium">
+                  Male Average
+                </div>
                 <div className="text-xs text-gray-500">
                   ({statistics.male.playerCount} players)
                 </div>
@@ -430,11 +369,13 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
 
               <div className="text-center">
                 <div className="text-3xl font-bold text-pink-600 mb-2">
-                  {statistics.female.averageRating !== null 
-                    ? statistics.female.averageRating.toFixed(2) 
+                  {statistics.female.averageRating !== null
+                    ? statistics.female.averageRating.toFixed(2)
                     : "N/A"}
                 </div>
-                <div className="text-sm text-gray-700 font-medium">Female Average</div>
+                <div className="text-sm text-gray-700 font-medium">
+                  Female Average
+                </div>
                 <div className="text-xs text-gray-500">
                   ({statistics.female.playerCount} players)
                 </div>
@@ -442,11 +383,13 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
 
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600 mb-2">
-                  {statistics.nonBinary.averageRating !== null 
-                    ? statistics.nonBinary.averageRating.toFixed(2) 
+                  {statistics.nonBinary.averageRating !== null
+                    ? statistics.nonBinary.averageRating.toFixed(2)
                     : "N/A"}
                 </div>
-                <div className="text-sm text-gray-700 font-medium">Non-Binary Average</div>
+                <div className="text-sm text-gray-700 font-medium">
+                  Non-Binary Average
+                </div>
                 <div className="text-xs text-gray-500">
                   ({statistics.nonBinary.playerCount} players)
                 </div>
@@ -454,11 +397,13 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
 
               <div className="text-center">
                 <div className="text-3xl font-bold text-gray-600 mb-2">
-                  {statistics.unspecified.averageRating !== null 
-                    ? statistics.unspecified.averageRating.toFixed(2) 
+                  {statistics.unspecified.averageRating !== null
+                    ? statistics.unspecified.averageRating.toFixed(2)
                     : "N/A"}
                 </div>
-                <div className="text-sm text-gray-700 font-medium">Unspecified Average</div>
+                <div className="text-sm text-gray-700 font-medium">
+                  Unspecified Average
+                </div>
                 <div className="text-xs text-gray-500">
                   ({statistics.unspecified.playerCount} players)
                 </div>
@@ -496,9 +441,12 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                 <div className="text-4xl font-bold text-purple-600 mb-2">
                   {statistics.nonBinary.percentage}%
                 </div>
-                <div className="text-sm text-gray-700 font-medium">Non-Binary</div>
+                <div className="text-sm text-gray-700 font-medium">
+                  Non-Binary
+                </div>
                 <div className="text-xs text-gray-500">
-                  {statistics.nonBinary.playerCount} of {statistics.totalPlayers}
+                  {statistics.nonBinary.playerCount} of{" "}
+                  {statistics.totalPlayers}
                 </div>
               </div>
 
@@ -506,9 +454,12 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                 <div className="text-4xl font-bold text-gray-600 mb-2">
                   {statistics.unspecified.percentage}%
                 </div>
-                <div className="text-sm text-gray-700 font-medium">Unspecified</div>
+                <div className="text-sm text-gray-700 font-medium">
+                  Unspecified
+                </div>
                 <div className="text-xs text-gray-500">
-                  {statistics.unspecified.playerCount} of {statistics.totalPlayers}
+                  {statistics.unspecified.playerCount} of{" "}
+                  {statistics.totalPlayers}
                 </div>
               </div>
             </div>
@@ -524,21 +475,31 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                 <div className="text-3xl font-bold text-green-600 mb-2">
                   {statistics.totalPlayers}
                 </div>
-                <div className="text-sm text-gray-700 font-medium">Total Players</div>
+                <div className="text-sm text-gray-700 font-medium">
+                  Total Players
+                </div>
               </div>
 
               <div>
                 <div className="text-3xl font-bold text-orange-600 mb-2">
-                  {players.filter(p => p.seasons.some(s => s.rank !== null)).length}
+                  {
+                    players.filter((p) =>
+                      p.seasons.some((s) => s.rank !== null)
+                    ).length
+                  }
                 </div>
-                <div className="text-sm text-gray-700 font-medium">Ranked Players</div>
+                <div className="text-sm text-gray-700 font-medium">
+                  Ranked Players
+                </div>
               </div>
 
               <div>
                 <div className="text-3xl font-bold text-red-600 mb-2">
-                  {players.filter(p => p.gender === null).length}
+                  {players.filter((p) => p.gender === null).length}
                 </div>
-                <div className="text-sm text-gray-700 font-medium">Gender Not Set</div>
+                <div className="text-sm text-gray-700 font-medium">
+                  Gender Not Set
+                </div>
               </div>
             </div>
           </div>

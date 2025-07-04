@@ -5,27 +5,22 @@ import Link from "next/link";
 import RankingInput, { type RankingInputRef } from "./RankingInput";
 import DeletePlayerButton from "./DeletePlayerButton";
 import isOddNumber from "@/lib/utils/isOddNumber";
-
-type SortField = "name" | "rank";
-type SortDirection = "asc" | "desc";
-
-interface Player {
-  id: number;
-  rank: number | null;
-  player: {
-    name: string;
-    id: number;
-  };
-}
+import { useFocusWithPersistence } from "@/lib/utils/focusUtils";
+import {
+  sortPlayers,
+  getSortIcon,
+  type PlayerSortField,
+  type PlayerForSorting,
+} from "@/lib/utils/tableUtils";
 
 interface SortablePlayerTableProps {
-  players: Player[];
+  players: PlayerForSorting[];
   seasonId: number;
   focusPlayerId?: number | null;
   onRankUpdate: (
     playerId: number,
     seasonId: number,
-    rank: number,
+    rank: number
   ) => Promise<void>;
   onRemove: (playerId: number) => Promise<void>;
 }
@@ -37,53 +32,28 @@ export default function SortablePlayerTable({
   onRankUpdate,
   onRemove,
 }: SortablePlayerTableProps) {
-  const [sortField, setSortField] = useState<SortField>("name");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [sortField, setSortField] = useState<PlayerSortField>("name");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const rankingInputRefs = useRef<{
     [playerId: number]: RankingInputRef | null;
   }>({});
-  useEffect(() => {
-    // Check for localStorage focus on mount (survives revalidation)
-    const storedFocusId = localStorage.getItem("focusPlayerId");
-    if (storedFocusId && !focusPlayerId) {
-      // Try to focus this player
-      const playerId = parseInt(storedFocusId);
-      const attemptFocus = (attempt: number) => {
-        if (rankingInputRefs.current[playerId]) {
-          rankingInputRefs.current[playerId]?.focus();
-          localStorage.removeItem("focusPlayerId"); // Clean up
-        } else {
-          if (attempt < 10) {
-            setTimeout(() => attemptFocus(attempt + 1), attempt * 100);
-          } else {
-            localStorage.removeItem("focusPlayerId"); // Clean up after max attempts
-          }
-        }
-      };
 
-      setTimeout(() => attemptFocus(1), 200);
-    }
-  }, [players]); // Run when players change (after revalidation)
+  // Use the focus utility
+  const focusManager = useFocusWithPersistence(
+    focusPlayerId ?? null,
+    rankingInputRefs,
+    [players]
+  );
 
   useEffect(() => {
-    if (focusPlayerId) {
-      // Try multiple times with increasing delays to handle the revalidation timing
-      const attemptFocus = (attempt: number) => {
-        if (rankingInputRefs.current[focusPlayerId]) {
-          rankingInputRefs.current[focusPlayerId]?.focus();
-        } else {
-          if (attempt < 5) {
-            setTimeout(() => attemptFocus(attempt + 1), attempt * 200);
-          }
-        }
-      };
+    focusManager.handleStoredFocus();
+  }, [players]);
 
-      // Start attempting focus after a short delay
-      setTimeout(() => attemptFocus(1), 100);
-    }
-  }, [focusPlayerId, players]); // Add players as dependency to re-run when data changes
+  useEffect(() => {
+    focusManager.handlePropFocus();
+  }, [focusPlayerId, players]);
 
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: PlayerSortField) => {
     if (sortField === field) {
       // Toggle direction if same field
       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
@@ -94,34 +64,10 @@ export default function SortablePlayerTable({
     }
   };
 
-  const sortedPlayers = [...players].sort((a, b) => {
-    let aValue: string | number;
-    let bValue: string | number;
-
-    if (sortField === "name") {
-      aValue = a.player.name.toLowerCase();
-      bValue = b.player.name.toLowerCase();
-    } else {
-      // For rank sorting, treat null as 0 or put at end
-      aValue = a.rank ?? (sortDirection === "asc" ? Number.MAX_VALUE : -1);
-      bValue = b.rank ?? (sortDirection === "asc" ? Number.MAX_VALUE : -1);
-    }
-
-    if (aValue < bValue) {
-      return sortDirection === "asc" ? -1 : 1;
-    }
-    if (aValue > bValue) {
-      return sortDirection === "asc" ? 1 : -1;
-    }
-    return 0;
+  const sortedPlayers = sortPlayers(players, {
+    field: sortField,
+    direction: sortDirection,
   });
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) {
-      return "";
-    }
-    return sortDirection === "asc" ? "↑" : "↓";
-  };
 
   return (
     <table className="table-fixed w-3/4 border-2 border-collapse">
@@ -133,7 +79,9 @@ export default function SortablePlayerTable({
               className="w-full h-full px-2 py-2 hover:bg-gray-400 transition-colors flex items-center justify-between"
             >
               <span>Player Name</span>
-              <span className="text-sm">{getSortIcon("name")}</span>
+              <span className="text-sm">
+                {getSortIcon(sortField, "name", sortDirection)}
+              </span>
             </button>
           </th>
           <th className="bg-gray-300 border-2 w-1/3">
@@ -142,7 +90,9 @@ export default function SortablePlayerTable({
               className="w-full h-full px-2 py-2 hover:bg-gray-400 transition-colors flex items-center justify-between"
             >
               <span>Rank</span>
-              <span className="text-sm">{getSortIcon("rank")}</span>
+              <span className="text-sm">
+                {getSortIcon(sortField, "rank", sortDirection)}
+              </span>
             </button>
           </th>
           <th className="bg-gray-300 border-2 w-1/6"></th>
@@ -156,9 +106,7 @@ export default function SortablePlayerTable({
                 isOddNumber(index) ? "bg-gray-300" : ""
               } border-2 px-2`}
             >
-              <Link 
-                href={`/players/${player.player.id}`}
-              >
+              <Link href={`/players/${player.player.id}`}>
                 {player.player.name}
               </Link>
             </td>

@@ -2,9 +2,9 @@ import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import SeasonPlayerManager from "@/app/components/SeasonPlayerManager";
 import SeasonStatistics from "@/app/components/SeasonStatistics";
+import { requireRole } from "@/lib/utils/server-auth";
 import { Decimal } from "@prisma/client/runtime/library";
 import { validateRank, validateUniqueName } from "@/lib/utils/validation";
-import { requireRole } from "@/lib/utils/server-auth";
 
 export default async function Season({
   params,
@@ -24,10 +24,10 @@ export default async function Season({
           id: true,
           rank: true,
           player: {
-            select: { 
-              name: true, 
+            select: {
+              name: true,
               id: true,
-              gender: true 
+              gender: true,
             },
           },
         },
@@ -54,7 +54,7 @@ export default async function Season({
   async function updatePlayerRanking(
     playerId: number,
     seasonId: number,
-    rank: number,
+    rank: number
   ) {
     "use server";
 
@@ -63,7 +63,7 @@ export default async function Season({
     try {
       // Use Decimal to avoid floating-point precision issues
       const decimalRank = new Decimal(rank.toString());
-      
+
       await prisma.seasonRanking.update({
         where: { seasonId_playerId: { seasonId, playerId } },
         data: { rank: decimalRank },
@@ -116,7 +116,7 @@ export default async function Season({
       const seasonId = parseInt(id);
 
       // Check if a player with this name already exists
-      await validateUniqueName(prisma, playerName, 'player');
+      await validateUniqueName(prisma, playerName, "player");
 
       // Create the new player
       const newPlayer = await prisma.player.create({
@@ -141,7 +141,9 @@ export default async function Season({
       return newPlayer.id; // Return the new player's ID
     } catch (error) {
       console.error("Failed to create and add player:", error);
-      throw new Error(error instanceof Error ? error.message : "Failed to create player");
+      throw new Error(
+        error instanceof Error ? error.message : "Failed to create player"
+      );
     }
   }
 
@@ -174,7 +176,7 @@ export default async function Season({
 
       {/* Season Statistics */}
       <div className="mb-8">
-        <SeasonStatistics 
+        <SeasonStatistics
           players={season.players.map((player) => ({
             ...player,
             rank: player.rank ? parseFloat(player.rank.toString()) : null,

@@ -3,11 +3,15 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import isOddNumber from "@/lib/utils/isOddNumber";
 import { sortSeasonsChronologically } from "@/lib/utils/seasonSorting";
-import { calculatePlayerStats, formatRatingChange, formatAverageChangePerSeason } from "@/lib/utils/playerStats";
+import {
+  calculatePlayerStats,
+  formatRatingChange,
+  formatAverageChangePerSeason,
+} from "@/lib/utils/playerStats";
 import { GLASSY_CONTAINER_CLASSES } from "@/lib/utils/styles";
 import PlayerGenderEditor from "@/app/components/PlayerGenderEditor";
-import { revalidatePath } from "next/cache";
 import { requireRole } from "@/lib/utils/server-auth";
+import { updatePlayerGender } from "@/lib/utils/serverActions";
 
 export default async function Player({
   params,
@@ -39,27 +43,9 @@ export default async function Player({
     notFound();
   }
 
-  async function updatePlayerGender(playerId: number, gender: string | null) {
-    "use server";
-    
-    try {
-      await prisma.player.update({
-        where: { id: playerId },
-        data: { 
-          gender: gender === null ? null : gender as any // Cast to Gender enum
-        },
-      });
-      
-      revalidatePath(`/players/${playerId}`);
-    } catch (error) {
-      console.error("Failed to update player gender:", error);
-      throw new Error("Failed to update gender");
-    }
-  }
-
   // Sort seasons chronologically (most recent first)
   const sortedSeasons = sortSeasonsChronologically(
-    player.seasons, 
+    player.seasons,
     (seasonRanking) => seasonRanking.season.name
   );
 
@@ -76,15 +62,21 @@ export default async function Player({
   return (
     <div className="min-h-screen flex flex-col items-center pt-8">
       <h1 className="text-4xl font-bold mb-8 text-[#333333]">{player.name}</h1>
-      
+
       {player.seasons.length === 0 ? (
-        <p className="text-gray-600">This player is not part of any seasons yet.</p>
+        <p className="text-gray-600">
+          This player is not part of any seasons yet.
+        </p>
       ) : (
         <>
           {/* Player Statistics Overview */}
           <div className="mb-8 w-full max-w-4xl px-4">
-            <h2 className="text-2xl font-bold mb-4 text-[#333333] text-center">Player Statistics</h2>
-            <div className={`${GLASSY_CONTAINER_CLASSES} grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`}>
+            <h2 className="text-2xl font-bold mb-4 text-[#333333] text-center">
+              Player Statistics
+            </h2>
+            <div
+              className={`${GLASSY_CONTAINER_CLASSES} grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`}
+            >
               {/* Total Seasons */}
               <div className="text-center">
                 <div className="text-3xl font-bold text-blue-600 mb-2">
@@ -118,7 +110,9 @@ export default async function Player({
               {/* Average Rating */}
               <div className="text-center">
                 <div className="text-3xl font-bold text-purple-600 mb-2">
-                  {playerStats.averageRating !== null ? playerStats.averageRating.toFixed(2) : "N/A"}
+                  {playerStats.averageRating !== null
+                    ? playerStats.averageRating.toFixed(2)
+                    : "N/A"}
                 </div>
                 <div className="text-sm text-gray-700 font-medium">
                   Average Rating
@@ -127,7 +121,11 @@ export default async function Player({
 
               {/* Rating Change */}
               <div className="text-center">
-                <div className={`text-2xl font-bold mb-2 ${formatRatingChange(playerStats.ratingChange).className}`}>
+                <div
+                  className={`text-2xl font-bold mb-2 ${
+                    formatRatingChange(playerStats.ratingChange).className
+                  }`}
+                >
                   {formatRatingChange(playerStats.ratingChange).text}
                 </div>
                 <div className="text-sm text-gray-700 font-medium">
@@ -140,8 +138,18 @@ export default async function Player({
 
               {/* Average Change per Season */}
               <div className="text-center">
-                <div className={`text-2xl font-bold mb-2 ${formatAverageChangePerSeason(playerStats.averageChangePerSeason).className}`}>
-                  {formatAverageChangePerSeason(playerStats.averageChangePerSeason).text}
+                <div
+                  className={`text-2xl font-bold mb-2 ${
+                    formatAverageChangePerSeason(
+                      playerStats.averageChangePerSeason
+                    ).className
+                  }`}
+                >
+                  {
+                    formatAverageChangePerSeason(
+                      playerStats.averageChangePerSeason
+                    ).text
+                  }
                 </div>
                 <div className="text-sm text-gray-700 font-medium">
                   Average Change per Season
@@ -161,7 +169,9 @@ export default async function Player({
 
           {/* Ranking Over Time Visualization */}
           <div className="mb-8 w-full max-w-4xl px-4">
-            <h3 className="text-2xl font-bold mb-4 text-[#333333] text-center">Rating Over Time</h3>
+            <h3 className="text-2xl font-bold mb-4 text-[#333333] text-center">
+              Rating Over Time
+            </h3>
             <div className={GLASSY_CONTAINER_CLASSES}>
               <div className="space-y-4">
                 {rankingData.map((data, index) => (
@@ -170,7 +180,7 @@ export default async function Player({
                     <div className="w-32 text-right pr-4 text-sm font-medium text-gray-700">
                       {data.season}
                     </div>
-                    
+
                     {/* Bar and ranking display */}
                     <div className="flex-1 flex items-center">
                       {data.rank === null ? (
@@ -183,7 +193,7 @@ export default async function Player({
                       ) : (
                         <>
                           {/* Horizontal bar */}
-                          <div 
+                          <div
                             className="h-6 bg-blue-500/70 rounded border border-blue-600/50 hover:bg-blue-600/80 transition-colors cursor-pointer mr-3"
                             style={{ width: `${(data.rank / 10) * 300}px` }}
                             title={`${data.season}: Rank ${data.rank}`}
@@ -197,7 +207,7 @@ export default async function Player({
                     </div>
                   </div>
                 ))}
-                
+
                 {/* Legend */}
                 <div className="mt-6 pt-4 border-t border-gray-300/50">
                   <div className="text-xs text-gray-600 text-center">
@@ -209,7 +219,9 @@ export default async function Player({
           </div>
 
           {/* Seasons Table */}
-          <h3 className="text-2xl font-bold mb-4 text-[#333333]">Season Details</h3>
+          <h3 className="text-2xl font-bold mb-4 text-[#333333]">
+            Season Details
+          </h3>
           <table className="table-fixed w-3/4 border-2 border-collapse">
             <thead>
               <tr>
@@ -224,22 +236,23 @@ export default async function Player({
             <tbody>
               {sortedSeasons.map((season, index) => (
                 <tr key={season.id}>
-                  <td className={`${
-                    isOddNumber(index) ? "bg-gray-300" : ""
-                  } border-2 px-2`}>
-                    <Link 
-                      href={`/seasons/${season.season.id}`}
-                    >
+                  <td
+                    className={`${
+                      isOddNumber(index) ? "bg-gray-300" : ""
+                    } border-2 px-2`}
+                  >
+                    <Link href={`/seasons/${season.season.id}`}>
                       {season.season.name}
                     </Link>
                   </td>
-                  <td className={`${
-                    isOddNumber(index) ? "bg-gray-300" : ""
-                  } border-2 p-2 text-center`}>
-                    {season.rank ? 
-                      parseFloat(season.rank.toString()).toString() : 
-                      "No rank"
-                    }
+                  <td
+                    className={`${
+                      isOddNumber(index) ? "bg-gray-300" : ""
+                    } border-2 p-2 text-center`}
+                  >
+                    {season.rank
+                      ? parseFloat(season.rank.toString()).toString()
+                      : "No rank"}
                   </td>
                 </tr>
               ))}
