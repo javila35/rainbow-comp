@@ -4,6 +4,7 @@ import "./globals.css";
 import Navbar from "./components/Navbar";
 import { auth } from "@/auth";
 import SignInButton from "./components/SignInButton";
+import SessionWrapper from "./components/SessionWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,14 +38,16 @@ export default async function RootLayout({
           minHeight: "100vh",
         }}
       >
-        {session ? (
-          <>
-            <Navbar />
-            {children}
-          </>
-        ) : (
-          <SignInButton />
-        )}
+        <SessionWrapper>
+          {session ? (
+            <>
+              <Navbar />
+              {children}
+            </>
+          ) : (
+            <SignInButton />
+          )}
+        </SessionWrapper>
       </body>
     </html>
   );
