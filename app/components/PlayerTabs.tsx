@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { CARD_CLASSES, CARD_LINK_CLASSES, GLASSY_CONTAINER_CLASSES } from "@/lib/utils/styles";
+import { CARD_CLASSES, CARD_LINK_CLASSES, GLASSY_CONTAINER_CLASSES, GLASSY_BUTTON_CLASSES } from "@/lib/utils/styles";
 
 interface Player {
   id: number;
@@ -98,6 +98,64 @@ type GenderFilter = "all" | "male" | "female" | "non-binary" | "unspecified";
 export default function PlayerTabs({ players }: PlayerTabsProps) {
   const [activeTab, setActiveTab] = useState<"list" | "stats">("list");
   const [genderFilter, setGenderFilter] = useState<GenderFilter>("all");
+  const [selectedPlayers, setSelectedPlayers] = useState<Set<number>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  // Function to update player genders in bulk
+  const bulkUpdateGender = async (playerIds: number[], gender: string | null) => {
+    try {
+      const response = await fetch('/api/players/bulk-update-gender', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playerIds, gender }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update player genders');
+      }
+
+      // Refresh the page to show updated data
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating player genders:', error);
+      alert('Failed to update player genders. Please try again.');
+    }
+  };
+
+  // Toggle player selection
+  const togglePlayerSelection = (playerId: number) => {
+    const newSelection = new Set(selectedPlayers);
+    if (newSelection.has(playerId)) {
+      newSelection.delete(playerId);
+    } else {
+      newSelection.add(playerId);
+    }
+    setSelectedPlayers(newSelection);
+  };
+
+  // Select all filtered players
+  const selectAllFiltered = () => {
+    const filteredPlayerIds = new Set(filteredPlayers.map(p => p.id));
+    setSelectedPlayers(filteredPlayerIds);
+  };
+
+  // Clear all selections
+  const clearSelection = () => {
+    setSelectedPlayers(new Set());
+    setIsSelectionMode(false);
+  };
+
+  // Handle bulk gender update
+  const handleBulkGenderUpdate = (gender: string | null) => {
+    if (selectedPlayers.size === 0) return;
+    
+    startTransition(() => {
+      bulkUpdateGender(Array.from(selectedPlayers), gender);
+    });
+  };
   
   // Filter players by gender
   const filteredPlayers = players.filter(player => {
@@ -148,11 +206,23 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
             <div className={`${GLASSY_CONTAINER_CLASSES} p-4`}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Filter by Gender</h3>
-                {genderFilter !== "all" && (
-                  <span className="text-sm text-gray-600">
-                    Showing {sortedPlayers.length} of {players.length} players
-                  </span>
-                )}
+                <div className="flex items-center gap-4">
+                  {genderFilter !== "all" && (
+                    <span className="text-sm text-gray-600">
+                      Showing {sortedPlayers.length} of {players.length} players
+                    </span>
+                  )}
+                  <button
+                    onClick={() => setIsSelectionMode(!isSelectionMode)}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                      isSelectionMode
+                        ? "bg-red-600 text-white shadow-md"
+                        : "bg-green-600 text-white shadow-md hover:bg-green-700"
+                    }`}
+                  >
+                    {isSelectionMode ? "Cancel Selection" : "Bulk Edit"}
+                  </button>
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
@@ -209,6 +279,69 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
             </div>
           </div>
 
+          {/* Bulk Actions Panel */}
+          {isSelectionMode && (
+            <div className={`${GLASSY_CONTAINER_CLASSES} p-4 mb-6 border-l-4 border-blue-500`}>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Bulk Actions ({selectedPlayers.size} selected)
+                </h3>
+                <div className="flex gap-2">
+                  <button
+                    onClick={selectAllFiltered}
+                    className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                  >
+                    Select All Filtered
+                  </button>
+                  <button
+                    onClick={clearSelection}
+                    className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              </div>
+              
+              {selectedPlayers.size > 0 && (
+                <div>
+                  <p className="text-sm text-gray-600 mb-3">
+                    Set gender for {selectedPlayers.size} selected player{selectedPlayers.size !== 1 ? 's' : ''}:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => handleBulkGenderUpdate("MALE")}
+                      disabled={isPending}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    >
+                      Set to Male
+                    </button>
+                    <button
+                      onClick={() => handleBulkGenderUpdate("FEMALE")}
+                      disabled={isPending}
+                      className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 disabled:opacity-50 transition-colors"
+                    >
+                      Set to Female
+                    </button>
+                    <button
+                      onClick={() => handleBulkGenderUpdate("NON_BINARY")}
+                      disabled={isPending}
+                      className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 transition-colors"
+                    >
+                      Set to Non-Binary
+                    </button>
+                    <button
+                      onClick={() => handleBulkGenderUpdate(null)}
+                      disabled={isPending}
+                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                    >
+                      Clear Gender
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Player List */}
           {sortedPlayers.length === 0 ? (
             <p className="text-gray-600 text-center">
@@ -220,21 +353,55 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {sortedPlayers.map((player) => (
-                <div key={player.id} className={CARD_CLASSES}>
-                  <Link
-                    href={`/players/${player.id}`}
-                    className={CARD_LINK_CLASSES}
-                  >
-                    <div className="flex flex-col">
-                      <span className="font-medium">{player.name}</span>
-                      <span className="text-xs text-gray-500 mt-1">
-                        {player.gender === "MALE" ? "Male" 
-                         : player.gender === "FEMALE" ? "Female"
-                         : player.gender === "NON_BINARY" ? "Non-Binary"
-                         : "Gender not set"}
-                      </span>
+                <div key={player.id} className={`${CARD_CLASSES} ${isSelectionMode ? 'cursor-pointer' : ''}`}>
+                  {isSelectionMode ? (
+                    <div
+                      onClick={() => togglePlayerSelection(player.id)}
+                      className={`p-4 rounded-lg transition-all duration-200 ${
+                        selectedPlayers.has(player.id)
+                          ? 'bg-blue-100 border-2 border-blue-500'
+                          : 'bg-white/60 border-2 border-transparent hover:bg-white/80'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex flex-col">
+                          <span className="font-medium">{player.name}</span>
+                          <span className="text-xs text-gray-500 mt-1">
+                            {player.gender === "MALE" ? "Male" 
+                             : player.gender === "FEMALE" ? "Female"
+                             : player.gender === "NON_BINARY" ? "Non-Binary"
+                             : "Gender not set"}
+                          </span>
+                        </div>
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                          selectedPlayers.has(player.id)
+                            ? 'bg-blue-500 border-blue-500'
+                            : 'border-gray-300'
+                        }`}>
+                          {selectedPlayers.has(player.id) && (
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                            </svg>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </Link>
+                  ) : (
+                    <Link
+                      href={`/players/${player.id}`}
+                      className={CARD_LINK_CLASSES}
+                    >
+                      <div className="flex flex-col">
+                        <span className="font-medium">{player.name}</span>
+                        <span className="text-xs text-gray-500 mt-1">
+                          {player.gender === "MALE" ? "Male" 
+                           : player.gender === "FEMALE" ? "Female"
+                           : player.gender === "NON_BINARY" ? "Non-Binary"
+                           : "Gender not set"}
+                        </span>
+                      </div>
+                    </Link>
+                  )}
                 </div>
               ))}
             </div>
