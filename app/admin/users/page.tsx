@@ -1,13 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
-import { GLASSY_CONTAINER_CLASSES, GLASSY_BUTTON_CLASSES } from "@/lib/utils/styles";
+import { GLASSY_CONTAINER_CLASSES } from "@/lib/utils/styles";
 
 interface User {
   id: string;
   name: string | null;
   email: string;
-  role: "USER" | "ORGANIZER" | "JOE";
+  role: "USER" | "ORGANIZER" | "ADMIN";
   createdAt: string;
 }
 
@@ -35,7 +35,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  const updateUserRole = async (userId: string, newRole: "USER" | "ORGANIZER" | "JOE") => {
+  const updateUserRole = async (userId: string, newRole: "USER" | "ORGANIZER" | "ADMIN") => {
     setUpdating(userId);
     try {
       const response = await fetch('/api/admin/users', {
@@ -63,7 +63,7 @@ export default function AdminUsersPage() {
   };
 
   return (
-    <ProtectedRoute requiredRole="JOE">
+    <ProtectedRoute requiredRole="ADMIN">
       <div className="min-h-screen flex flex-col items-center pt-8">
         <h1 className="text-4xl font-bold mb-8 font-[family-name:var(--font-geist-sans)] text-[#333333]">
           User Management Dashboard
@@ -105,7 +105,7 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
-                          user.role === 'JOE' ? 'bg-purple-200 text-purple-800' :
+                          user.role === 'ADMIN' ? 'bg-purple-200 text-purple-800' :
                           user.role === 'ORGANIZER' ? 'bg-blue-200 text-blue-800' :
                           'bg-green-200 text-green-800'
                         }`}>
@@ -114,7 +114,7 @@ export default function AdminUsersPage() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex gap-2">
-                          {(['USER', 'ORGANIZER', 'JOE'] as const).map((role) => (
+                          {(['USER', 'ORGANIZER', 'ADMIN'] as const).map((role) => (
                             <button
                               key={role}
                               onClick={() => updateUserRole(user.id, role)}

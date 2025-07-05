@@ -13,8 +13,9 @@ interface ImportResult {
   name: string;
   rank: number;
   success: boolean;
-  action: 'added_to_season' | 'updated_ranking' | 'player_not_found';
+  action: 'added_to_season' | 'updated_ranking' | 'player_not_found' | 'ranking_unchanged' | 'ranking_conflict';
   error?: string;
+  currentRank?: number; // For ranking conflicts
 }
 
 export async function POST(request: NextRequest) {
@@ -62,7 +63,6 @@ export async function POST(request: NextRequest) {
         });
 
         if (!player) {
-          // Player doesn't exist - add to results as not found
           results.push({
             name: name.trim(),
             rank,
@@ -86,25 +86,52 @@ export async function POST(request: NextRequest) {
         const decimalRank = new Decimal(rank.toString());
 
         if (existingRanking) {
-          // Update existing ranking
-          await prisma.seasonRanking.update({
-            where: {
-              seasonId_playerId: {
-                seasonId: parseInt(seasonId),
-                playerId: player.id
+          // Check if the ranking is the same
+          const currentRankDecimal = existingRanking.rank;
+          
+          if (!currentRankDecimal) {
+            // No current rank, treat as new addition
+            await prisma.seasonRanking.update({
+              where: {
+                seasonId_playerId: {
+                  seasonId: parseInt(seasonId),
+                  playerId: player.id
+                }
+              },
+              data: {
+                rank: decimalRank
               }
-            },
-            data: {
-              rank: decimalRank
-            }
-          });
+            });
 
-          results.push({
-            name: player.name,
-            rank,
-            success: true,
-            action: 'updated_ranking'
-          });
+            results.push({
+              name: player.name,
+              rank,
+              success: true,
+              action: 'updated_ranking'
+            });
+          } else {
+            const currentRank = parseFloat(currentRankDecimal.toString());
+            
+            if (Math.abs(currentRank - rank) < 0.001) { // Account for decimal precision
+              // Ranking is the same, skip it
+              results.push({
+                name: player.name,
+                rank,
+                success: true,
+                action: 'ranking_unchanged'
+              });
+            } else {
+              // Ranking is different, mark as conflict for manual review
+              results.push({
+                name: player.name,
+                rank,
+                success: false,
+                action: 'ranking_conflict',
+                error: `Player already exists in season with rank ${currentRank}. New rank: ${rank}`,
+                currentRank
+              });
+            }
+          }
         } else {
           // Add player to season with ranking
           await prisma.seasonRanking.create({
@@ -123,7 +150,10 @@ export async function POST(request: NextRequest) {
           });
         }
 
-        successCount++;
+        // Only count as success if we actually made a change
+        if (results[results.length - 1].success && results[results.length - 1].action !== 'ranking_unchanged') {
+          successCount++;
+        }
 
       } catch (error) {
         console.error(`Error processing player ${playerData.name}:`, error);

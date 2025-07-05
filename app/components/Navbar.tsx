@@ -4,7 +4,7 @@ import { hasRole } from "@/lib/utils/auth";
 
 export default async function Navbar() {
   const session = await auth();
-  const isAdmin = session?.user && hasRole(session.user.role, "JOE");
+  const isAdmin = session?.user && hasRole(session.user.role, "ADMIN");
   const canAccessManagement = session?.user && hasRole(session.user.role, "ORGANIZER");
 
   return (

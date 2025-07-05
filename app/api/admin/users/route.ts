@@ -5,9 +5,9 @@ import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    // Check if user is authenticated and has JOE role
+    // Check if user is authenticated and has ADMIN role
     const session = await auth();
-    if (!session?.user || !hasRole(session.user.role, 'JOE')) {
+    if (!session?.user || !hasRole(session.user.role, 'ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
@@ -34,23 +34,23 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
-    // Check if user is authenticated and has JOE role
+    // Check if user is authenticated and has ADMIN role
     const session = await auth();
-    if (!session?.user || !hasRole(session.user.role, 'JOE')) {
+    if (!session?.user || !hasRole(session.user.role, 'ADMIN')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
     const { userId, role } = await request.json();
 
     // Validate the role
-    if (!['USER', 'ORGANIZER', 'JOE'].includes(role)) {
+    if (!['USER', 'ORGANIZER', 'ADMIN'].includes(role)) {
       return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
     }
 
-    // Prevent users from removing their own JOE role (to avoid lockout)
-    if (session.user.id === userId && session.user.role === 'JOE' && role !== 'JOE') {
+    // Prevent users from removing their own ADMIN role (to avoid lockout)
+    if (session.user.id === userId && session.user.role === 'ADMIN' && role !== 'ADMIN') {
       return NextResponse.json({ 
-        error: 'Cannot remove your own JOE role' 
+        error: 'Cannot remove your own ADMIN role' 
       }, { status: 400 });
     }
 
