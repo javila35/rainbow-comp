@@ -828,7 +828,7 @@ export default function CompactCsvUpload({ seasonId, onUploadComplete }: Compact
                                 <span className="text-red-600 font-bold">🚫</span>
                                 <div>
                                   <div className="font-medium">Missing Players ({notFoundRows.length})</div>
-                                  <div className="text-xs text-orange-700">These players don't exist in the database and will be created</div>
+                                  <div className="text-xs text-orange-700">These players don&apos;t exist in the database and will be created</div>
                                 </div>
                               </div>
                             )}
@@ -843,7 +843,7 @@ export default function CompactCsvUpload({ seasonId, onUploadComplete }: Compact
                             )}
                           </div>
                           <div className="mt-3 text-xs text-orange-700">
-                            ✅ <strong>Tip:</strong> Select multiple items and use "Process Selected" for bulk actions, or use individual buttons for one-by-one control.
+                            ✅ <strong>Tip:</strong> Select multiple items and use &quot;Process Selected&quot; for bulk actions, or use individual buttons for one-by-one control.
                           </div>
                         </div>
                       </div>

@@ -1,3 +1,5 @@
+import type { PrismaClient } from "../../app/generated/prisma";
+
 /**
  * Validation utilities for player rankings
  */
@@ -28,20 +30,32 @@ export function validateRank(rank: number): void {
  * @returns Promise<boolean> - True if name exists
  */
 export async function checkNameExists(
-  prisma: any,
+  prisma: PrismaClient,
   name: string,
   model: 'player' | 'season'
 ): Promise<boolean> {
   const trimmedName = name.trim();
   
-  const existingRecord = await prisma[model].findFirst({
-    where: {
-      name: {
-        equals: trimmedName,
-        mode: 'insensitive', // Case-insensitive comparison
+  let existingRecord;
+  if (model === 'player') {
+    existingRecord = await prisma.player.findFirst({
+      where: {
+        name: {
+          equals: trimmedName,
+          mode: 'insensitive', // Case-insensitive comparison
+        },
       },
-    },
-  });
+    });
+  } else {
+    existingRecord = await prisma.season.findFirst({
+      where: {
+        name: {
+          equals: trimmedName,
+          mode: 'insensitive', // Case-insensitive comparison
+        },
+      },
+    });
+  }
 
   return !!existingRecord;
 }
@@ -54,7 +68,7 @@ export async function checkNameExists(
  * @throws Error if name exists
  */
 export async function validateUniqueName(
-  prisma: any,
+  prisma: PrismaClient,
   name: string,
   model: 'player' | 'season'
 ): Promise<void> {

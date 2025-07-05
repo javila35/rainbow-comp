@@ -2,11 +2,12 @@
  * Utility functions for calculating player statistics
  */
 
+import { Decimal } from "@prisma/client/runtime/library";
 import { sortSeasonsChronologically } from "./seasonSorting";
 
 export interface PlayerSeasonRanking {
   id: number;
-  rank: any; // Decimal or null from Prisma
+  rank: Decimal | null; // Decimal or null from Prisma
   season: {
     id: number;
     name: string;
@@ -69,7 +70,7 @@ export function calculatePlayerStats(seasonRankings: PlayerSeasonRanking[]): Pla
 
   // Calculate average rating
   const totalRating = rankedSeasons.reduce(
-    (sum, season) => sum + parseFloat(season.rank.toString()),
+    (sum, season) => sum + (season.rank ? parseFloat(season.rank.toString()) : 0),
     0
   );
   const averageRating = totalRating / rankedSeasons.length;
@@ -82,14 +83,16 @@ export function calculatePlayerStats(seasonRankings: PlayerSeasonRanking[]): Pla
     const mostRecentRanked = rankedSeasons[0];
     const firstRanked = rankedSeasons[rankedSeasons.length - 1];
     
-    ratingChange = 
-      parseFloat(mostRecentRanked.rank.toString()) - 
-      parseFloat(firstRanked.rank.toString());
-    
-    // Calculate average change per season
-    // Total change divided by the number of season gaps (total seasons - 1)
-    averageChangePerSeason = ratingChange / (rankedSeasons.length - 1);
-    averageChangePerSeason = Math.round(averageChangePerSeason * 100) / 100; // Round to 2 decimal places
+    if (mostRecentRanked.rank && firstRanked.rank) {
+      ratingChange = 
+        parseFloat(mostRecentRanked.rank.toString()) - 
+        parseFloat(firstRanked.rank.toString());
+      
+      // Calculate average change per season
+      // Total change divided by the number of season gaps (total seasons - 1)
+      averageChangePerSeason = ratingChange / (rankedSeasons.length - 1);
+      averageChangePerSeason = Math.round(averageChangePerSeason * 100) / 100; // Round to 2 decimal places
+    }
   }
 
   return {

@@ -26,7 +26,7 @@ export default function AccessDenied() {
             Access Denied
           </h2>
           <p className="mb-2 text-sm text-gray-700 font-medium">
-            You don't have permission to access this page.
+            You don&apos;t have permission to access this page.
           </p>
           <p className="text-sm text-gray-700 font-medium">
             Please contact an administrator if you believe this is an error.

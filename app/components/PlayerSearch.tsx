@@ -204,7 +204,7 @@ export default function PlayerSearch({
               <span className="text-green-600 font-medium">
                 + Create new player:
               </span>
-              "{searchTerm}"
+              &quot;{searchTerm}&quot;
             </button>
           </div>
         )}

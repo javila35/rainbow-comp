@@ -49,7 +49,7 @@ const RankingInput = forwardRef<RankingInputRef, RankingInputProps>(
             validateRank(numValue);
             await onRankUpdate(playerId, seasonId, numValue);
           } catch (error) {
-            setError("Failed to update rank");
+            setError(error instanceof Error ? error.message : "Failed to update rank");
           }
         }
       }, 2000);

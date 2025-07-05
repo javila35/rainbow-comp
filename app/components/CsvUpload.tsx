@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { GLASSY_CONTAINER_CLASSES, GLASSY_BUTTON_CLASSES } from "@/lib/utils/styles";
+import { GLASSY_CONTAINER_CLASSES } from "@/lib/utils/styles";
 
 interface CsvUploadProps {
   seasonId: number;
@@ -12,6 +12,13 @@ interface CsvRow {
   name: string;
   rank: number;
   status: 'pending' | 'success' | 'error';
+  error?: string;
+}
+
+interface ServerResult {
+  name: string;
+  rank: number;
+  success: boolean;
   error?: string;
 }
 
@@ -114,7 +121,7 @@ export default function CsvUpload({ seasonId, onUploadComplete }: CsvUploadProps
       if (response.ok) {
         // Update results with server response
         previewData.forEach(row => {
-          const serverResult = result.results?.find((r: any) => r.name === row.name);
+          const serverResult = result.results?.find((r: ServerResult) => r.name === row.name);
           results.push({
             ...row,
             status: serverResult?.success ? 'success' : 'error',
@@ -159,7 +166,7 @@ export default function CsvUpload({ seasonId, onUploadComplete }: CsvUploadProps
           Upload a CSV file with columns: <strong>Name,Rank</strong>
         </p>
         <p className="text-xs text-gray-500 mb-4">
-          Example: "Alex Berg,5.75" or "Andre Lancour,6.14"
+          Example: &quot;Alex Berg,5.75&quot; or &quot;Andre Lancour,6.14&quot;
         </p>
         
         <input

@@ -41,17 +41,16 @@ export default function SortablePlayerTable({
   // Use the focus utility
   const focusManager = useFocusWithPersistence(
     focusPlayerId ?? null,
-    rankingInputRefs,
-    [players]
+    rankingInputRefs
   );
 
   useEffect(() => {
     focusManager.handleStoredFocus();
-  }, [players]);
+  }, [players, focusManager]);
 
   useEffect(() => {
     focusManager.handlePropFocus();
-  }, [focusPlayerId, players]);
+  }, [focusPlayerId, players, focusManager]);
 
   const handleSort = (field: PlayerSortField) => {
     if (sortField === field) {

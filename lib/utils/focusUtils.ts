@@ -1,11 +1,13 @@
-/**
- * Utility functions for managing focus state in complex components
- */
+import { RefObject } from 'react';
+
+interface FocusableRef {
+  focus: () => void;
+}
 
 export interface FocusManager {
   attemptFocus: (
     playerId: number,
-    refs: React.MutableRefObject<{ [key: number]: any }>,
+    refs: RefObject<{ [key: number]: FocusableRef | null }>,
     maxAttempts?: number,
     baseDelay?: number
   ) => void;
@@ -23,12 +25,12 @@ export function createFocusManager(): FocusManager {
 
   const attemptFocus = (
     playerId: number,
-    refs: React.MutableRefObject<{ [key: number]: any }>,
+    refs: RefObject<{ [key: number]: FocusableRef | null }>,
     maxAttempts: number = 10,
     baseDelay: number = 100
   ) => {
     const tryFocus = (attempt: number) => {
-      const ref = refs.current[playerId];
+      const ref = refs.current?.[playerId];
       if (ref && typeof ref.focus === "function") {
         ref.focus();
         clearStoredFocus();
@@ -68,8 +70,7 @@ export function createFocusManager(): FocusManager {
  */
 export function useFocusWithPersistence(
   focusPlayerId: number | null,
-  refs: React.MutableRefObject<{ [key: number]: any }>,
-  dependencies: any[] = []
+  refs: RefObject<{ [key: number]: FocusableRef | null }>
 ) {
   const focusManager = createFocusManager();
 

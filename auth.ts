@@ -13,26 +13,32 @@ export function hasRole(userRole: Role, requiredRole: Role): boolean {
   const roleHierarchy = {
     USER: 1,
     ORGANIZER: 2,
-    ADMIN: 3,
+    ADMIN: 3
   };
-
-  return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
+  
+  return roleHierarchy[userRole as keyof typeof roleHierarchy] >= roleHierarchy[requiredRole as keyof typeof roleHierarchy];
 }
 
-export function canAcces(useRole: Role, requiredRoles: Role[]): boolean {
-  return requiredRoles.some((role) => hasRole(useRole, role));
-}
 
 export const { auth, handlers, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: "jwt", // Use JWT instead of database sessions
+  },
   callbacks: {
-    session: async ({ session, user }) => {
-      if (session.user) {
-        session.user.id = user.id;
-        session.user.role = user.role;
+    session: async ({ session, token }) => {
+      if (session.user && token.sub) {
+        session.user.id = token.sub;
+        session.user.role = token.role as string;
       }
       return session;
     },
+    jwt: async ({ token, user }) => {
+      if (user) {
+        token.role = user.role;
+      }
+      return token;
+    }
   },
   providers: [Google],
 });

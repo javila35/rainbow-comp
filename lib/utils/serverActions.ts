@@ -5,6 +5,7 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { Decimal } from "@prisma/client/runtime/library";
+import { Gender } from "@/app/generated/prisma";
 import { validateRank, validateUniqueName } from "./validation";
 
 /**
@@ -20,7 +21,7 @@ export async function updatePlayerGender(
     await prisma.player.update({
       where: { id: playerId },
       data: {
-        gender: gender === null ? null : (gender as any), // Cast to Gender enum
+        gender: gender === null ? null : (gender as Gender), // Cast to Gender enum
       },
     });
 
