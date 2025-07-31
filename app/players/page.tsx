@@ -1,6 +1,7 @@
 import prisma from "@/lib/prisma";
 import PlayerTabs from "@/app/components/PlayerTabs";
 import { requireRole } from "@/lib/utils/server-auth";
+import { HEADING_H1, PAGE_CONTAINER } from "@/lib/utils/styles";
 
 export default async function Players() {
   await requireRole("ORGANIZER");
@@ -27,8 +28,8 @@ export default async function Players() {
   }));
 
   return (
-    <div className="min-h-screen flex flex-col items-center pt-8">
-      <h1 className="text-4xl font-bold mb-8 font-[family-name:var(--font-geist-sans)] text-[#333333]">
+    <div className={PAGE_CONTAINER}>
+      <h1 className={`${HEADING_H1} mb-8`}>
         Players
       </h1>
       

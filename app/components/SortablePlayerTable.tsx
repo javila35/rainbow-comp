@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import RankingInput, { type RankingInputRef } from "./RankingInput";
 import DeletePlayerButton from "./DeletePlayerButton";
-import isOddNumber from "@/lib/utils/isOddNumber";
 import { useFocusWithPersistence } from "@/lib/utils/focusUtils";
 import {
   sortPlayers,
@@ -12,6 +11,7 @@ import {
   type PlayerSortField,
   type PlayerForSorting,
 } from "@/lib/utils/tableUtils";
+import { TABLE_HEADER, createTableRowClasses } from "@/lib/utils/styles";
 
 interface SortablePlayerTableProps {
   players: PlayerForSorting[];
@@ -72,7 +72,7 @@ export default function SortablePlayerTable({
     <table className="table-fixed w-3/4 border-2 border-collapse">
       <thead>
         <tr>
-          <th className="bg-gray-300 border-2 w-1/2">
+          <th className={`${TABLE_HEADER} w-1/2`}>
             <button
               onClick={() => handleSort("name")}
               className="w-full h-full px-2 py-2 hover:bg-gray-400 transition-colors flex items-center justify-between"
@@ -83,7 +83,7 @@ export default function SortablePlayerTable({
               </span>
             </button>
           </th>
-          <th className="bg-gray-300 border-2 w-1/3">
+          <th className={`${TABLE_HEADER} w-1/3`}>
             <button
               onClick={() => handleSort("rank")}
               className="w-full h-full px-2 py-2 hover:bg-gray-400 transition-colors flex items-center justify-between"
@@ -94,25 +94,21 @@ export default function SortablePlayerTable({
               </span>
             </button>
           </th>
-          <th className="bg-gray-300 border-2 w-1/6"></th>
+          <th className={`${TABLE_HEADER} w-1/6`}></th>
         </tr>
       </thead>
       <tbody>
         {sortedPlayers.map((player, index) => (
           <tr key={player.id}>
             <td
-              className={`${
-                isOddNumber(index) ? "bg-gray-300" : ""
-              } border-2 px-2`}
+              className={createTableRowClasses(index)}
             >
               <Link href={`/players/${player.player.id}`}>
                 {player.player.name}
               </Link>
             </td>
             <td
-              className={`${
-                isOddNumber(index) ? "bg-gray-300" : ""
-              } border-2 p-2`}
+              className={`${createTableRowClasses(index)} p-2`}
             >
               {" "}
               <RankingInput
@@ -128,9 +124,7 @@ export default function SortablePlayerTable({
               />
             </td>
             <td
-              className={`${
-                isOddNumber(index) ? "bg-gray-300" : ""
-              } border-2 p-2 text-center`}
+              className={`${createTableRowClasses(index)} p-2 text-center`}
             >
               <DeletePlayerButton
                 playerName={player.player.name}

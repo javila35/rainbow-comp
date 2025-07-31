@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import ProtectedRoute from "@/app/components/ProtectedRoute";
-import { GLASSY_CONTAINER_CLASSES } from "@/lib/utils/styles";
+import { GLASSY_CONTAINER_CLASSES, HEADING_H1, HEADING_H3, PAGE_CONTAINER } from "@/lib/utils/styles";
 
 interface User {
   id: string;
@@ -16,7 +16,6 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
 
-  // Fetch users on component mount
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -64,13 +63,13 @@ export default function AdminUsersPage() {
 
   return (
     <ProtectedRoute requiredRole="ADMIN">
-      <div className="min-h-screen flex flex-col items-center pt-8">
-        <h1 className="text-4xl font-bold mb-8 font-[family-name:var(--font-geist-sans)] text-[#333333]">
+      <div className={PAGE_CONTAINER}>
+        <h1 className={`${HEADING_H1} mb-8`}>
           User Management Dashboard
         </h1>
 
         <div className={`${GLASSY_CONTAINER_CLASSES} w-full max-w-6xl mx-4`}>
-          <h2 className="text-2xl font-bold mb-6 text-[#333333]">
+          <h2 className={`${HEADING_H3} mb-6`}>
             Manage User Roles
           </h2>
 

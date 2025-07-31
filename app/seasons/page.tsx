@@ -3,7 +3,7 @@ import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { sortSeasonsChronologically } from "@/lib/utils/seasonSorting";
 import { validateUniqueName } from "@/lib/utils/validation";
-import { GLASSY_INPUT_CLASSES, GLASSY_BUTTON_CLASSES, CARD_CLASSES, CARD_LINK_CLASSES } from "@/lib/utils/styles";
+import { GLASSY_INPUT_CLASSES, GLASSY_BUTTON_CLASSES, CARD_CLASSES, CARD_LINK_CLASSES, HEADING_H1, HEADING_H3, PAGE_CONTAINER, CONTENT_CONTAINER, GRID_CONTAINER } from "@/lib/utils/styles";
 import { requireRole } from "@/lib/utils/server-auth";
 
 export default async function Seasons() {
@@ -11,7 +11,6 @@ export default async function Seasons() {
 
   const seasons = await prisma.season.findMany();
 
-  // Sort seasons chronologically (most recent first)
   const sortedSeasons = sortSeasonsChronologically(seasons, (season) => season.name);
 
   async function createSeason(formData: FormData) {
@@ -24,7 +23,6 @@ export default async function Seasons() {
     }
 
     try {
-      // Check if a season with this name already exists
       await validateUniqueName(prisma, name, 'season');
 
       await prisma.season.create({
@@ -41,8 +39,8 @@ export default async function Seasons() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center pt-8">
-      <h1 className="text-4xl font-bold mb-8 font-[family-name:var(--font-geist-sans)] text-[#333333]">
+    <div className={PAGE_CONTAINER}>
+      <h1 className={`${HEADING_H1} mb-8`}>
         Seasons
       </h1>
 
@@ -67,15 +65,15 @@ export default async function Seasons() {
         </form>
       </div>
 
-      <h3 className="text-2xl font-bold mb-4 text-[#333333]">
+      <h3 className={`${HEADING_H3} mb-4`}>
         Existing Seasons
       </h3>
 
       {sortedSeasons.length === 0 ? (
         <p className="text-gray-600">No seasons created yet.</p>
       ) : (
-        <div className="w-full max-w-6xl px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className={CONTENT_CONTAINER}>
+          <div className={GRID_CONTAINER}>
             {sortedSeasons.map((season) => (
               <div key={season.id} className={CARD_CLASSES}>
                 <Link

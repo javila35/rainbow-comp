@@ -6,6 +6,8 @@ import {
   CARD_CLASSES,
   CARD_LINK_CLASSES,
   GLASSY_CONTAINER_CLASSES,
+  BUTTON_PRIMARY,
+  BUTTON_SECONDARY,
 } from "@/lib/utils/styles";
 import {
   calculatePlayerStatistics,
@@ -49,7 +51,6 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
         throw new Error("Failed to update player genders");
       }
 
-      // Refresh the page to show updated data
       window.location.reload();
     } catch (error) {
       console.error("Error updating player genders:", error);
@@ -57,7 +58,6 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
     }
   };
 
-  // Toggle player selection
   const togglePlayerSelection = (playerId: number) => {
     const newSelection = new Set(selectedPlayers);
     if (newSelection.has(playerId)) {
@@ -68,19 +68,19 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
     setSelectedPlayers(newSelection);
   };
 
-  // Select all filtered players
+
   const selectAllFiltered = () => {
     const filteredPlayerIds = new Set(filteredPlayers.map((p) => p.id));
     setSelectedPlayers(filteredPlayerIds);
   };
 
-  // Clear all selections
+
   const clearSelection = () => {
     setSelectedPlayers(new Set());
     setIsSelectionMode(false);
   };
 
-  // Handle bulk gender update
+
   const handleBulkGenderUpdate = (gender: string | null) => {
     if (selectedPlayers.size === 0) return;
 
@@ -89,7 +89,7 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
     });
   };
 
-  // Filter and sort players using utility functions
+
   const filteredPlayers = filterPlayersByGender(players, genderFilter);
   const sortedPlayers = sortPlayersByName(filteredPlayers);
   const genderCounts = getGenderCounts(players);
@@ -124,7 +124,6 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
       {activeTab === "list" ? (
         // Player List View
         <div>
-          {" "}
           {/* Gender Filter */}
           <div className="mb-6">
             <div className={`${GLASSY_CONTAINER_CLASSES} p-4`}>
@@ -216,13 +215,13 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                 <div className="flex gap-2">
                   <button
                     onClick={selectAllFiltered}
-                    className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 transition-colors"
+                    className={`${BUTTON_SECONDARY} text-sm`}
                   >
                     Select All Filtered
                   </button>
                   <button
                     onClick={clearSelection}
-                    className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                    className={`${BUTTON_SECONDARY} text-sm`}
                   >
                     Clear All
                   </button>
@@ -239,7 +238,7 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                     <button
                       onClick={() => handleBulkGenderUpdate("MALE")}
                       disabled={isPending}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                      className={`${BUTTON_PRIMARY} disabled:opacity-50`}
                     >
                       Set to Male
                     </button>
@@ -260,7 +259,7 @@ export default function PlayerTabs({ players }: PlayerTabsProps) {
                     <button
                       onClick={() => handleBulkGenderUpdate(null)}
                       disabled={isPending}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors"
+                      className={`px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 transition-colors`}
                     >
                       Clear Gender
                     </button>

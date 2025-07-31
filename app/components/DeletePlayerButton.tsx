@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { BUTTON_SECONDARY, BUTTON_DANGER } from "@/lib/utils/styles";
 
 interface DeletePlayerButtonProps {
   playerName: string;
@@ -60,14 +61,14 @@ export default function DeletePlayerButton({
                 <button
                   onClick={handleCancel}
                   disabled={isLoading}
-                  className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 disabled:opacity-50"
+                  className={`${BUTTON_SECONDARY} text-xs disabled:opacity-50`}
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={isLoading}
-                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50"
+                  className={`${BUTTON_DANGER} text-xs disabled:opacity-50`}
                 >
                   {isLoading ? "..." : "Remove"}
                 </button>

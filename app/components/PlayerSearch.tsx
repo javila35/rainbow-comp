@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { INPUT_BASE, createDropdownClasses } from "@/lib/utils/styles";
 
 interface Player {
   id: number;
@@ -10,8 +11,8 @@ interface Player {
 interface PlayerSearchProps {
   seasonId: number;
   onPlayerAdd: (playerId: number) => Promise<void>;
-  onPlayerCreate: (playerName: string) => Promise<number>; // Now returns the new player's ID
-  onPlayerAdded?: (playerId: number) => void; // New callback for when a player is successfully added
+  onPlayerCreate: (playerName: string) => Promise<number>;
+  onPlayerAdded?: (playerId: number) => void;
   availablePlayers: Player[];
 }
 
@@ -51,12 +52,11 @@ export default function PlayerSearch({
 
     window.addEventListener("focus", handleWindowFocus);
 
-    // Cleanup
     return () => {
       clearInterval(interval);
       window.removeEventListener("focus", handleWindowFocus);
     };
-  }, []); // Run only on mount
+  }, []);
 
   useEffect(() => {
     if (searchTerm.trim() === "") {
@@ -148,7 +148,6 @@ export default function PlayerSearch({
   };
 
   const handleInputBlur = () => {
-    // Delay hiding suggestions to allow for clicks
     setTimeout(() => {
       setShowSuggestions(false);
       setSelectedIndex(-1);
@@ -168,7 +167,7 @@ export default function PlayerSearch({
         onFocus={() => searchTerm && setShowSuggestions(true)}
         onBlur={handleInputBlur}
         disabled={isLoading}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        className={INPUT_BASE}
       />
       {showSuggestions && filteredPlayers.length > 0 && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
@@ -177,11 +176,7 @@ export default function PlayerSearch({
               key={player.id}
               onClick={() => handlePlayerSelect(player)}
               disabled={isLoading}
-              className={`w-full px-4 py-2 text-left focus:outline-none disabled:opacity-50 border-b border-gray-100 last:border-b-0 ${
-                index === selectedIndex
-                  ? "bg-blue-100 text-blue-900"
-                  : "hover:bg-gray-100 focus:bg-gray-100"
-              }`}
+              className={createDropdownClasses(index === selectedIndex)}
             >
               {player.name}
             </button>
