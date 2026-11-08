@@ -1,8 +1,6 @@
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import SeasonPlayerManager from "@/app/components/SeasonPlayerManager";
-import SeasonStatistics from "@/app/components/SeasonStatistics";
-import ClientCsvUpload from "@/app/components/ClientCsvUpload";
+import { SeasonPlayerManager, SeasonStatistics, ClientCsvUpload } from "@/app/components/seasons";
 import { requireRole } from "@/lib/utils/server-auth";
 import { Decimal } from "@prisma/client/runtime/library";
 import { validateRank, validateUniqueName } from "@/lib/utils/validation";

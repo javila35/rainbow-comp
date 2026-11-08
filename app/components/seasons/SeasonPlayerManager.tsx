@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import PlayerSearch from "./PlayerSearch";
-import SortablePlayerTable from "./SortablePlayerTable";
+import { PlayerSearch } from "../players";
+import SortablePlayerTable from "../tables/SortablePlayerTable";
 import { createFocusManager } from "@/lib/utils/focusUtils";
 
 interface Player {

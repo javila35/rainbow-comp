@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import RankingInput, { type RankingInputRef } from "./RankingInput";
-import DeletePlayerButton from "./DeletePlayerButton";
+import { RankingInput, type RankingInputRef } from "../seasons";
+import { DeletePlayerButton } from "../players";
 import { useFocusWithPersistence } from "@/lib/utils/focusUtils";
 import {
   sortPlayers,

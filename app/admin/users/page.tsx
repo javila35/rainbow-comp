@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import ProtectedRoute from "@/app/components/ProtectedRoute";
+import { ProtectedRoute } from "@/app/components/auth";
 import { GLASSY_CONTAINER_CLASSES, HEADING_H1, HEADING_H3, PAGE_CONTAINER } from "@/lib/utils/styles";
 
 interface User {

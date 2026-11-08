@@ -9,7 +9,7 @@ import {
   formatAverageChangePerSeason,
 } from "@/lib/utils/playerStats";
 import { GLASSY_CONTAINER_CLASSES } from "@/lib/utils/styles";
-import PlayerGenderEditor from "@/app/components/PlayerGenderEditor";
+import { PlayerGenderEditor } from "@/app/components/players";
 import { requireRole } from "@/lib/utils/server-auth";
 import { updatePlayerGender } from "@/lib/utils/serverActions";
 

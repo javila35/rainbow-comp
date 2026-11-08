@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import PlayerTabs from "@/app/components/PlayerTabs";
+import { PlayerTabs } from "@/app/components/players";
 import { requireRole } from "@/lib/utils/server-auth";
 import { HEADING_H1, PAGE_CONTAINER } from "@/lib/utils/styles";
 
