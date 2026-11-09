@@ -8,12 +8,7 @@ export interface Player {
 }
 
 export interface SeasonRanking {
-  id: number;
   rank: number | null;
-  season: {
-    id: number;
-    name: string;
-  };
 }
 
 export interface PlayerWithStats extends Player {

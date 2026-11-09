@@ -135,7 +135,10 @@ export default function PlayerList({ players }: PlayerListProps) {
                   className={CARD_LINK_CLASSES}
                 >
                   <div className="flex flex-col">
-                    <span className="font-medium">{player.name}</span>
+                    <div className="flex flex-row justify-between">
+                      <span className="font-medium">{player.name}</span>
+                      <span className="text-xs text-gray-500 mt-1">{player.averageRating}</span>  
+                    </div>
                     <span className="text-xs text-gray-500 mt-1">
                       {getGenderLabel(player.gender)}
                     </span>

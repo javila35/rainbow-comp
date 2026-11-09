@@ -20,19 +20,28 @@ export default async function Players() {
   });
 
   // Convert Decimal ranks to numbers for client component compatibility
-  const players = playersData.map(player => ({
-    ...player,
-    seasons: player.seasons.map(season => ({
-      rank: season.rank ? Number(season.rank) : null,
-    })),
-  }));
+  const players = playersData.map((player) => {
+    let averageRating: number = 0;
+    player.seasons.map(({rank}) => {
+      if (rank) {
+        averageRating = rank?.toNumber() + averageRating
+      }
+    })
+
+    averageRating = Math.round(averageRating / player.seasons.length * 100) / 100;
+    
+    return {
+      ...player,
+      seasons: player.seasons.map((season) => ({
+        rank: season.rank ? Number(season.rank) : null,
+      })),
+      averageRating,
+    };
+  });
 
   return (
     <div className={PAGE_CONTAINER}>
-      <h1 className={`${HEADING_H1} mb-8`}>
-        Players
-      </h1>
-      
+      <h1 className={`${HEADING_H1} mb-8`}>Players</h1>
       {players.length === 0 ? (
         <p className="text-gray-600">No players created yet.</p>
       ) : (

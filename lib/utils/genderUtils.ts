@@ -25,6 +25,7 @@ export interface PlayerWithRatings {
   seasons: {
     rank: number | null;
   }[];
+  averageRating: number;
 }
 
 /**
