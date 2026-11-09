@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useSession } from "next-auth/react";
-import { hasRole } from "@/auth";
+import { hasRole } from "@/lib/utils/auth";
 import type { Role } from "@/app/generated/prisma";
 
 interface RoleGuardProps {
